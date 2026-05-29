@@ -220,6 +220,24 @@ app.post("/chat", async (req, res) => {
   }
 });
 
+// Get all course scores for admin
+app.get("/all-course-scores", (req, res) => {
+  const scores = db.prepare(`
+    SELECT cs.*, u.name as student_name, c.name as course_name
+    FROM course_scores cs
+    JOIN users u ON cs.user_id = u.id
+    JOIN courses c ON cs.course_id = c.id
+    WHERE u.role = 'student'
+  `).all();
+  res.json(scores);
+});
+
+// Get all users
+app.get("/users", (req, res) => {
+  const users = db.prepare("SELECT id, name, email, role FROM users").all();
+  res.json(users);
+});
+
 app.listen(5001, () => {
   console.log("Backend running on http://127.0.0.1:5001");
 });
