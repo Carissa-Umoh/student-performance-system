@@ -18,7 +18,13 @@ function LecturerDashboard({ user, onLogout }) {
   const fetchCourses = async () => {
     const res = await fetch(`http://127.0.0.1:5001/courses/${user.id}`);
     const data = await res.json();
-    setCourses(data);
+    const coursesWithCounts = await Promise.all(data.map(async (course) => {
+      const scoresRes = await fetch(`http://127.0.0.1:5001/course-scores/${course.id}`);
+      const scores = await scoresRes.json();
+      const atRiskCount = scores.filter(s => s.prediction === "At Risk" || s.prediction === "Fail").length;
+      return { ...course, atRiskCount };
+    }));
+    setCourses(coursesWithCounts);
   };
 
   const fetchCourseStudents = async (courseId) => {
@@ -97,6 +103,29 @@ function LecturerDashboard({ user, onLogout }) {
       alert("Error connecting to API");
     }
     setLoading(false);
+  };
+
+  const handleExport = () => {
+    if (courseStudents.length === 0) {
+      alert("No students to export");
+      return;
+    }
+    const headers = ["Name", "CA", "Participation", "Total", "Standing", "Date"];
+    const rows = courseStudents.map(s => [
+      s.student_name,
+      s.ca,
+      s.participation,
+      s.total,
+      s.prediction,
+      s.date
+    ]);
+    const csvContent = [headers, ...rows].map(r => r.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${activeCourse?.name || "students"}_report.csv`;
+    a.click();
   };
 
   const getResultColor = (result) => {
@@ -194,12 +223,19 @@ function LecturerDashboard({ user, onLogout }) {
                       >
                         <div className="flex justify-between items-center">
                           <span className="font-medium text-gray-800 text-sm">📖 {course.name}</span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDeleteCourse(course.id); }}
-                            className="text-red-400 hover:text-red-600 text-xs"
-                          >
-                            ✕
-                          </button>
+                          <div className="flex items-center gap-2">
+                            {course.atRiskCount > 0 && (
+                              <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                ⚠️ {course.atRiskCount}
+                              </span>
+                            )}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteCourse(course.id); }}
+                              className="text-red-400 hover:text-red-600 text-xs"
+                            >
+                              ✕
+                            </button>
+                          </div>
                         </div>
                         {course.code && (
                           <div className="mt-1 flex items-center gap-2">
@@ -250,7 +286,15 @@ function LecturerDashboard({ user, onLogout }) {
 
             {activeCourse && atRiskStudents.length > 0 && (
               <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mb-6">
-                <h2 className="text-lg font-semibold text-red-700 mb-4">⚠️ Students Needing Attention in {activeCourse.name}</h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold text-red-700">⚠️ Students Needing Attention in {activeCourse.name}</h2>
+                  <button
+                    onClick={handleExport}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-xl transition"
+                  >
+                    📥 Export CSV
+                  </button>
+                </div>
                 <div className="space-y-2">
                   {atRiskStudents.map((s) => (
                     <div key={s.id} className="bg-white rounded-xl p-3 flex justify-between items-center">
@@ -264,6 +308,17 @@ function LecturerDashboard({ user, onLogout }) {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {activeCourse && courseStudents.length > 0 && atRiskStudents.length === 0 && (
+              <div className="flex justify-end mb-6">
+                <button
+                  onClick={handleExport}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-xl transition"
+                >
+                  📥 Export CSV
+                </button>
               </div>
             )}
 
