@@ -136,7 +136,8 @@ function App() {
           </div>
 
           <div className="bg-white rounded-3xl shadow-2xl p-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Welcome Back</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">EduPredict Login</h2>
+            <p className="text-gray-400 text-sm mb-6">Sign in with your university credentials. Contact your administrator if you need access.</p>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
@@ -158,23 +159,7 @@ function App() {
               Sign In
             </button>
 
-            <div className="mt-6 p-4 bg-indigo-50 rounded-xl">
-              <p className="text-sm font-semibold text-indigo-700 mb-3">Demo Accounts</p>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">Student</span>
-                  <span>student@test.com / 123456</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-medium">Lecturer</span>
-                  <span>lecturer@test.com / 123456</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-xs font-medium">Admin</span>
-                  <span>admin@test.com / 123456</span>
-                </div>
-              </div>
-            </div>
+            
           </div>
         </div>
       </div>

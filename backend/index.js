@@ -56,10 +56,25 @@ db.exec(`
 // Seed demo users
 const seedUsers = () => {
   const users = [
-    { name: "John Student", email: "student@test.com", password: "123456", role: "student" },
-    { name: "Dr. Smith", email: "lecturer@test.com", password: "123456", role: "lecturer" },
-    { name: "Admin User", email: "admin@test.com", password: "123456", role: "admin" },
+    // Students
+    { name: "Chidera Okonkwo", email: "chidera.okonkwo@pau.edu.ng", password: "123456", role: "student" },
+    { name: "Amara Nwosu", email: "amara.nwosu@pau.edu.ng", password: "123456", role: "student" },
+    { name: "Emeka Eze", email: "emeka.eze@pau.edu.ng", password: "123456", role: "student" },
+    { name: "Fatima Aliyu", email: "fatima.aliyu@pau.edu.ng", password: "123456", role: "student" },
+    { name: "Tunde Adeyemi", email: "tunde.adeyemi@pau.edu.ng", password: "123456", role: "student" },
+    { name: "Ngozi Okafor", email: "ngozi.okafor@pau.edu.ng", password: "123456", role: "student" },
+    { name: "Blessing Uchenna", email: "blessing.uchenna@pau.edu.ng", password: "123456", role: "student" },
+    { name: "Seun Fashola", email: "seun.fashola@pau.edu.ng", password: "123456", role: "student" },
+    { name: "Kelechi Nnamdi", email: "kelechi.nnamdi@pau.edu.ng", password: "123456", role: "student" },
+    { name: "Adaeze Mbah", email: "adaeze.mbah@pau.edu.ng", password: "123456", role: "student" },
+    // Lecturers
+    { name: "Dr. Chukwuemeka Smith", email: "c.smith@pau.edu.ng", password: "123456", role: "lecturer" },
+    { name: "Dr. Aisha Bello", email: "a.bello@pau.edu.ng", password: "123456", role: "lecturer" },
+    { name: "Prof. James Obi", email: "j.obi@pau.edu.ng", password: "123456", role: "lecturer" },
+    // Admin
+    { name: "Admin User", email: "admin@pau.edu.ng", password: "123456", role: "admin" },
   ];
+
   users.forEach((u) => {
     const exists = db.prepare("SELECT * FROM users WHERE email = ?").get(u.email);
     if (!exists) {
@@ -67,7 +82,94 @@ const seedUsers = () => {
     }
   });
 };
+
+const seedCourses = () => {
+  const lecturers = {
+    "c.smith@pau.edu.ng": [
+      { name: "MTH101 — Mathematics I", code: "MTH101" },
+      { name: "MTH102 — Mathematics II", code: "MTH102" },
+    ],
+    "a.bello@pau.edu.ng": [
+      { name: "CSC101 — Introduction to Computer Science", code: "CSC101" },
+    ],
+    "j.obi@pau.edu.ng": [
+      { name: "CSC102 — Programming Fundamentals", code: "CSC102" },
+    ],
+  };
+
+  Object.entries(lecturers).forEach(([email, courses]) => {
+    const lecturer = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+    if (!lecturer) return;
+
+    courses.forEach((course) => {
+      const exists = db.prepare("SELECT * FROM courses WHERE code = ? AND role = 'lecturer'").get(course.code);
+      if (!exists) {
+        db.prepare("INSERT INTO courses (name, user_id, role, code) VALUES (?, ?, ?, ?)").run(course.name, lecturer.id, "lecturer", course.code);
+      }
+    });
+  });
+};
+
+const seedStudentScores = () => {
+  const sampleScores = [
+    // MTH101
+    { studentEmail: "chidera.okonkwo@pau.edu.ng", courseCode: "MTH101", ca: 25, participation: 4 },
+    { studentEmail: "amara.nwosu@pau.edu.ng", courseCode: "MTH101", ca: 12, participation: 2 },
+    { studentEmail: "emeka.eze@pau.edu.ng", courseCode: "MTH101", ca: 20, participation: 3 },
+    { studentEmail: "fatima.aliyu@pau.edu.ng", courseCode: "MTH101", ca: 7, participation: 1 },
+    { studentEmail: "tunde.adeyemi@pau.edu.ng", courseCode: "MTH101", ca: 28, participation: 5 },
+    // MTH102
+    { studentEmail: "ngozi.okafor@pau.edu.ng", courseCode: "MTH102", ca: 18, participation: 3 },
+    { studentEmail: "blessing.uchenna@pau.edu.ng", courseCode: "MTH102", ca: 10, participation: 2 },
+    { studentEmail: "seun.fashola@pau.edu.ng", courseCode: "MTH102", ca: 22, participation: 4 },
+    // CSC101
+    { studentEmail: "kelechi.nnamdi@pau.edu.ng", courseCode: "CSC101", ca: 26, participation: 5 },
+    { studentEmail: "adaeze.mbah@pau.edu.ng", courseCode: "CSC101", ca: 8, participation: 1 },
+    { studentEmail: "chidera.okonkwo@pau.edu.ng", courseCode: "CSC101", ca: 24, participation: 4 },
+    // CSC102
+    { studentEmail: "tunde.adeyemi@pau.edu.ng", courseCode: "CSC102", ca: 15, participation: 3 },
+    { studentEmail: "emeka.eze@pau.edu.ng", courseCode: "CSC102", ca: 9, participation: 2 },
+    { studentEmail: "fatima.aliyu@pau.edu.ng", courseCode: "CSC102", ca: 27, participation: 5 },
+  ];
+
+  sampleScores.forEach((score) => {
+    const student = db.prepare("SELECT * FROM users WHERE email = ?").get(score.studentEmail);
+    if (!student) return;
+
+    const lecturerCourse = db.prepare("SELECT * FROM courses WHERE code = ? AND role = 'lecturer'").get(score.courseCode);
+    if (!lecturerCourse) return;
+
+    const existingStudentCourse = db.prepare("SELECT * FROM courses WHERE code = ? AND user_id = ? AND role = 'student'").get(score.courseCode, student.id);
+    let studentCourseId;
+
+    if (!existingStudentCourse) {
+      const result = db.prepare("INSERT INTO courses (name, user_id, role, code) VALUES (?, ?, ?, ?)").run(lecturerCourse.name, student.id, "student", score.courseCode);
+      studentCourseId = result.lastInsertRowid;
+    } else {
+      studentCourseId = existingStudentCourse.id;
+    }
+
+    const existingScore = db.prepare("SELECT * FROM course_scores WHERE course_id = ? AND user_id = ?").get(studentCourseId, student.id);
+    if (!existingScore) {
+      const currentTotal = score.ca + score.participation;
+
+      const getStanding = () => {
+        if (currentTotal < 10) return "Fail";
+        if (currentTotal < 15) return "At Risk";
+        if (currentTotal < 25) return "Pass Possible";
+        return "Distinction Possible";
+      };
+
+      const date = new Date().toLocaleDateString();
+      db.prepare(`INSERT INTO course_scores (course_id, user_id, ca, participation, exam, prediction, grade, total, needed, update_count, date) VALUES (?,?,?,?,?,?,?,?,?,0,?)`)
+        .run(studentCourseId, student.id, score.ca, score.participation, 0, getStanding(), "", currentTotal, Math.max(0, 45 - currentTotal), date);
+    }
+  });
+};
+
 seedUsers();
+seedCourses();
+seedStudentScores();
 
 // Login
 app.post("/login", (req, res) => {
