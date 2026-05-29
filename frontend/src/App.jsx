@@ -1,17 +1,21 @@
 import { useState, useEffect } from "react";
 import { PieChart, Pie, Cell, Legend, Tooltip } from "recharts";
 import Chatbot from "./Chatbot";
-import Login from "./Login";
 import Admin from "./Admin";
+import LecturerDashboard from "./LecturerDashboard";
 import Workspace from "./Workspace";
+import StudentDashboard from "./StudentDashboard";
 
 function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState("dashboard");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
   const [name, setName] = useState("");
-  const [math, setMath] = useState("");
-  const [reading, setReading] = useState("");
-  const [writing, setWriting] = useState("");
+  const [ca, setCa] = useState("");
+  const [participation, setParticipation] = useState("");
+  const [exam, setExam] = useState("");
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
   const [students, setStudents] = useState([]);
@@ -26,41 +30,62 @@ function App() {
     fetchStudents();
   }, []);
 
-  const handleLogin = (loggedInUser) => setUser(loggedInUser);
+  const handleLogin = async () => {
+    const res = await fetch("http://127.0.0.1:5001/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setUser(data.user);
+      setLoginError("");
+    } else {
+      setLoginError("Invalid email or password");
+    }
+  };
+
   const handleLogout = () => { setUser(null); setPage("dashboard"); };
 
   const handlePredict = async () => {
-    if (!name || !math || !reading || !writing) {
+    if (!name || !ca || !participation || !exam) {
       alert("Please fill in all fields");
       return;
     }
+    if (Number(ca) > 30) { alert("CA score cannot exceed 30"); return; }
+    if (Number(participation) > 5) { alert("Participation cannot exceed 5"); return; }
+    if (Number(exam) > 65) { alert("Exam score cannot exceed 65"); return; }
+
     setLoading(true);
     try {
       const res = await fetch("http://127.0.0.1:5000/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          math: Number(math),
-          reading: Number(reading),
-          writing: Number(writing),
+          ca: Number(ca),
+          participation: Number(participation),
+          exam: Number(exam),
         }),
       });
       const data = await res.json();
-      setPrediction(data.prediction);
+      setPrediction(data);
+
       await fetch("http://127.0.0.1:5001/students", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
-          math: Number(math),
-          reading: Number(reading),
-          writing: Number(writing),
+          math: Number(ca),
+          reading: Number(participation),
+          writing: Number(exam),
           prediction: data.prediction,
         }),
       });
+
       fetchStudents();
     } catch (error) {
-      setPrediction("Error connecting to API");
+      setPrediction(null);
+      alert("Error connecting to API");
     }
     setLoading(false);
   };
@@ -71,32 +96,93 @@ function App() {
   };
 
   const getResultColor = (result) => {
-    if (result === "Excellent") return "bg-green-100 text-green-700 border-green-400";
-    if (result === "Average") return "bg-yellow-100 text-yellow-700 border-yellow-400";
-    if (result === "At Risk") return "bg-red-100 text-red-700 border-red-400";
+    if (result === "Distinction") return "bg-green-100 text-green-700 border-green-400";
+    if (result === "Pass") return "bg-blue-100 text-blue-700 border-blue-400";
+    if (result === "At Risk") return "bg-yellow-100 text-yellow-700 border-yellow-400";
+    if (result === "Fail") return "bg-red-100 text-red-700 border-red-400";
     return "bg-gray-100 text-gray-700";
   };
 
   const getResultBadge = (result) => {
-    if (result === "Excellent") return "🟢";
-    if (result === "Average") return "🟡";
-    if (result === "At Risk") return "🔴";
+    if (result === "Distinction") return "🟢";
+    if (result === "Pass") return "🔵";
+    if (result === "At Risk") return "🟡";
+    if (result === "Fail") return "🔴";
     return "";
   };
 
   const getChartData = () => {
-    const counts = { Excellent: 0, Average: 0, "At Risk": 0 };
-    students.forEach((s) => { counts[s.prediction]++; });
+    const counts = { Distinction: 0, Pass: 0, "At Risk": 0, Fail: 0 };
+    students.forEach((s) => { if (counts[s.prediction] !== undefined) counts[s.prediction]++; });
     return [
-      { name: "Excellent", value: counts.Excellent },
-      { name: "Average", value: counts.Average },
+      { name: "Distinction", value: counts.Distinction },
+      { name: "Pass", value: counts.Pass },
       { name: "At Risk", value: counts["At Risk"] },
+      { name: "Fail", value: counts.Fail },
     ].filter((d) => d.value > 0);
   };
 
-  const COLORS = ["#4ade80", "#facc15", "#f87171"];
+  const COLORS = ["#4ade80", "#60a5fa", "#facc15", "#f87171"];
 
-  if (!user) return <Login onLogin={handleLogin} />;
+  // Login page
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-blue-500 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="text-6xl mb-4">🎓</div>
+            <h1 className="text-4xl font-bold text-white">EduPredict</h1>
+            <p className="text-indigo-200 mt-2">AI-Powered Student Performance System</p>
+          </div>
+
+          <div className="bg-white rounded-3xl shadow-2xl p-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Welcome Back</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} placeholder="Enter your email" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} placeholder="Enter your password" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
+              </div>
+            </div>
+
+            {loginError && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl">
+                <p className="text-red-500 text-sm text-center">{loginError}</p>
+              </div>
+            )}
+
+            <button onClick={handleLogin} className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition duration-200 text-lg">
+              Sign In
+            </button>
+
+            <div className="mt-6 p-4 bg-indigo-50 rounded-xl">
+              <p className="text-sm font-semibold text-indigo-700 mb-3">Demo Accounts</p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">Student</span>
+                  <span>student@test.com / 123456</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-medium">Lecturer</span>
+                  <span>lecturer@test.com / 123456</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-xs font-medium">Admin</span>
+                  <span>admin@test.com / 123456</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (user.role === "student") return <StudentDashboard user={user} onLogout={handleLogout} />;
+  if (user.role === "lecturer") return <LecturerDashboard user={user} onLogout={handleLogout} />;
   if (user.role === "admin") return <Admin user={user} onLogout={handleLogout} />;
 
   return (
@@ -133,7 +219,7 @@ function App() {
       <div className="flex-1 overflow-auto bg-gray-50">
         {page === "chatbot" ? (
           <Chatbot />
-          ) : page === "workspace" ? (
+        ) : page === "workspace" ? (
           <Workspace />
         ) : (
           <div className="p-8">
@@ -148,16 +234,16 @@ function App() {
                 <p className="text-3xl font-bold text-indigo-600">{students.length}</p>
               </div>
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <p className="text-sm text-gray-500 mb-1">🟢 Excellent</p>
-                <p className="text-3xl font-bold text-green-500">{students.filter(s => s.prediction === "Excellent").length}</p>
+                <p className="text-sm text-gray-500 mb-1">🟢 Distinction</p>
+                <p className="text-3xl font-bold text-green-500">{students.filter(s => s.prediction === "Distinction").length}</p>
               </div>
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <p className="text-sm text-gray-500 mb-1">🟡 Average</p>
-                <p className="text-3xl font-bold text-yellow-400">{students.filter(s => s.prediction === "Average").length}</p>
+                <p className="text-sm text-gray-500 mb-1">🔵 Pass</p>
+                <p className="text-3xl font-bold text-blue-400">{students.filter(s => s.prediction === "Pass").length}</p>
               </div>
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <p className="text-sm text-gray-500 mb-1">🔴 At Risk</p>
-                <p className="text-3xl font-bold text-red-400">{students.filter(s => s.prediction === "At Risk").length}</p>
+                <p className="text-sm text-gray-500 mb-1">🔴 Fail</p>
+                <p className="text-3xl font-bold text-red-400">{students.filter(s => s.prediction === "Fail").length}</p>
               </div>
             </div>
 
@@ -170,24 +256,37 @@ function App() {
                     <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter student name" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Math Score</label>
-                    <input type="number" value={math} onChange={(e) => setMath(e.target.value)} placeholder="0 - 100" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
+                    <label className="block text-sm font-medium text-gray-600 mb-1">CA Score <span className="text-gray-400">(out of 30)</span></label>
+                    <input type="number" value={ca} onChange={(e) => setCa(e.target.value)} placeholder="0 - 30" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Reading Score</label>
-                    <input type="number" value={reading} onChange={(e) => setReading(e.target.value)} placeholder="0 - 100" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Participation <span className="text-gray-400">(out of 5)</span></label>
+                    <input type="number" value={participation} onChange={(e) => setParticipation(e.target.value)} placeholder="0 - 5" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Writing Score</label>
-                    <input type="number" value={writing} onChange={(e) => setWriting(e.target.value)} placeholder="0 - 100" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Exam Score <span className="text-gray-400">(out of 65)</span></label>
+                    <input type="number" value={exam} onChange={(e) => setExam(e.target.value)} placeholder="0 - 65" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
                   </div>
                 </div>
                 <button onClick={handlePredict} disabled={loading} className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition duration-200">
                   {loading ? "Predicting..." : "⚡ Predict Performance"}
                 </button>
+
                 {prediction && (
-                  <div className={`mt-4 p-4 rounded-xl border-2 text-center text-xl font-bold ${getResultColor(prediction)}`}>
-                    {getResultBadge(prediction)} {prediction}
+                  <div className={`mt-4 p-4 rounded-xl border-2 ${getResultColor(prediction.prediction)}`}>
+                    <div className="text-center text-xl font-bold mb-3">
+                      {getResultBadge(prediction.prediction)} {prediction.prediction} — Grade {prediction.grade}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="bg-white rounded-lg p-2 text-center">
+                        <p className="text-gray-500">Total Score</p>
+                        <p className="font-bold text-lg">{prediction.total}/100</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-2 text-center">
+                        <p className="text-gray-500">To Next Grade</p>
+                        <p className="font-bold text-lg">{prediction.needed > 0 ? `+${prediction.needed}` : "Top Grade!"}</p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -201,9 +300,9 @@ function App() {
                   </div>
                 ) : (
                   <PieChart width={300} height={300}>
-                    <Pie data={getChartData()} cx={145} cy={120} outerRadius={50} dataKey="value" paddingAngle={3}>
+                    <Pie data={getChartData()} cx={145} cy={120} outerRadius={100} innerRadius={50} dataKey="value" paddingAngle={3}>
                       {getChartData().map((entry, index) => (
-                        <Cell key={index} fill={COLORS[["Excellent", "Average", "At Risk"].indexOf(entry.name)]} />
+                        <Cell key={index} fill={COLORS[["Distinction", "Pass", "At Risk", "Fail"].indexOf(entry.name)]} />
                       ))}
                     </Pie>
                     <Tooltip formatter={(value, name) => [`${value} students`, name]} />
@@ -225,9 +324,9 @@ function App() {
                   <thead>
                     <tr className="text-left text-gray-400 border-b border-gray-100">
                       <th className="pb-3 font-medium">Name</th>
-                      <th className="pb-3 font-medium">Math</th>
-                      <th className="pb-3 font-medium">Reading</th>
-                      <th className="pb-3 font-medium">Writing</th>
+                      <th className="pb-3 font-medium">CA</th>
+                      <th className="pb-3 font-medium">Participation</th>
+                      <th className="pb-3 font-medium">Exam</th>
                       <th className="pb-3 font-medium">Result</th>
                       <th className="pb-3 font-medium">Date</th>
                       <th className="pb-3"></th>
