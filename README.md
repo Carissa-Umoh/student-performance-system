@@ -1,3 +1,38 @@
+# SAPS — Student Academic Performance and Prediction System
+
+An AI-powered full-stack web application that predicts student academic performance using machine learning. Built as a final year project for the Computer Science department at Pan-Atlantic University.
+
+---
+
+## 🌐 Live Demo
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://saps-app.vercel.app |
+| Backend API | https://saps-backend-qcci.onrender.com |
+| ML Service | https://saps-ml.onrender.com |
+
+---
+
+## 🎯 Project Overview
+
+SAPS helps students understand where they stand academically before their exams. Students can enter their CA and participation scores to get an AI-powered prediction of their likely performance, along with the exact exam scores needed to achieve each grade.
+
+### Key Features
+- 🤖 ML-powered performance prediction (98% accuracy)
+- 👨‍🎓 Student dashboard with per-course predictions
+- 👨‍🏫 Lecturer dashboard with class distribution and at-risk alerts
+- 🔐 Role-based login (Student, Lecturer, Admin)
+- 📊 Performance analytics and charts
+- 🤖 AI Academic Mentor chatbot
+- 📝 Educational AI Workspace (note summarizer, study plan generator)
+- 📥 CSV export for student records
+- 🔗 Course code system for student-lecturer linking
+
+---
+
+## 🏗️ System Architecture
+
 ---
 
 ## ⚙️ Prerequisites
@@ -10,7 +45,7 @@ Make sure you have the following installed:
 
 ---
 
-## 🚀 Setup Instructions
+## 🚀 Setup Instructions (Local)
 
 ### 1. Clone the repository
 ```bash
@@ -43,7 +78,7 @@ npm run dev
 
 ---
 
-## ▶️ Running the Project
+## ▶️ Running the Project Locally
 
 You need **3 terminals** running simultaneously:
 
@@ -53,14 +88,14 @@ cd ml-service
 venv\Scripts\activate
 python app.py
 ```
-Runs on: https://saps-ml.onrender.com
+Runs on: http://127.0.0.1:5000
 
 **Terminal 2 — Backend:**
 ```bash
 cd backend
 node index.js
 ```
-Runs on: https://saps-backend-qcci.onrender.com
+Runs on: http://127.0.0.1:5001
 
 **Terminal 3 — Frontend:**
 ```bash
@@ -92,7 +127,8 @@ All accounts use password: `123456`
 - **Algorithm:** Random Forest Classifier
 - **Accuracy:** 98%
 - **Input:** CA Score (0-30), Participation (0-5), Exam Score (0-65)
-- **Output:** Distinction / Pass / At Risk / Fail + Grade (A-F)
+- **Output:** Distinction Possible / Pass Possible / At Risk / Fail
+- **Grade:** A (70+), B (60-69), C (50-59), D (45-49), E (40-44), F (below 40)
 
 ---
 
@@ -104,6 +140,7 @@ All accounts use password: `123456`
 | Backend | Node.js, Express, SQLite |
 | ML Service | Python, Flask, Scikit-learn |
 | AI Chatbot | Cohere API |
+| Deployment | Vercel (Frontend), Render (Backend + ML) |
 | Version Control | Git, GitHub |
 
 ---
