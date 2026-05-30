@@ -6,13 +6,13 @@ function Admin({ user, onLogout }) {
   const [page, setPage] = useState("records");
 
   const fetchStudents = async () => {
-    const res = await fetch("http://127.0.0.1:5001/all-course-scores");
+    const res = await fetch("https://saps-backend-qcci.onrender.com/all-course-scores");
     const data = await res.json();
     setStudents(data);
   };
 
   const fetchUsers = async () => {
-    const res = await fetch("http://127.0.0.1:5001/users");
+    const res = await fetch("https://saps-backend-qcci.onrender.com/users");
     const data = await res.json();
     setUsers(data);
   };
@@ -23,7 +23,7 @@ function Admin({ user, onLogout }) {
   }, []);
 
   const handleDelete = async (id) => {
-    await fetch(`http://127.0.0.1:5001/students/${id}`, { method: "DELETE" });
+    await fetch(`https://saps-backend-qcci.onrender.com/students/${id}`, { method: "DELETE" });
     fetchStudents();
   };
 

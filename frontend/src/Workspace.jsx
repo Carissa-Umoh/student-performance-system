@@ -17,7 +17,7 @@ function Workspace() {
     }
     setSummaryLoading(true);
     try {
-      const res = await fetch("http://127.0.0.1:5001/chat", {
+      const res = await fetch("https://saps-backend-qcci.onrender.com/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -39,7 +39,7 @@ function Workspace() {
     }
     setPlanLoading(true);
     try {
-      const res = await fetch("http://127.0.0.1:5001/chat", {
+      const res = await fetch("https://saps-backend-qcci.onrender.com/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

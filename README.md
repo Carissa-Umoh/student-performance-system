@@ -53,14 +53,14 @@ cd ml-service
 venv\Scripts\activate
 python app.py
 ```
-Runs on: http://127.0.0.1:5000
+Runs on: https://saps-ml.onrender.com
 
 **Terminal 2 — Backend:**
 ```bash
 cd backend
 node index.js
 ```
-Runs on: http://127.0.0.1:5001
+Runs on: https://saps-backend-qcci.onrender.com
 
 **Terminal 3 — Frontend:**
 ```bash

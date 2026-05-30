@@ -16,10 +16,10 @@ function LecturerDashboard({ user, onLogout }) {
   const [loading, setLoading] = useState(false);
 
   const fetchCourses = async () => {
-    const res = await fetch(`http://127.0.0.1:5001/courses/${user.id}`);
+    const res = await fetch(`https://saps-backend-qcci.onrender.com/courses/${user.id}`);
     const data = await res.json();
     const coursesWithCounts = await Promise.all(data.map(async (course) => {
-      const scoresRes = await fetch(`http://127.0.0.1:5001/course-scores/${course.id}`);
+      const scoresRes = await fetch(`https://saps-backend-qcci.onrender.com/course-scores/${course.id}`);
       const scores = await scoresRes.json();
       const atRiskCount = scores.filter(s => s.prediction === "At Risk" || s.prediction === "Fail").length;
       return { ...course, atRiskCount };
@@ -28,7 +28,7 @@ function LecturerDashboard({ user, onLogout }) {
   };
 
   const fetchCourseStudents = async (courseId) => {
-    const res = await fetch(`http://127.0.0.1:5001/course-scores/${courseId}`);
+    const res = await fetch(`https://saps-backend-qcci.onrender.com/course-scores/${courseId}`);
     const data = await res.json();
     setCourseStudents(data);
   };
@@ -39,7 +39,7 @@ function LecturerDashboard({ user, onLogout }) {
 
   const handleAddCourse = async () => {
     if (!newCourse.trim()) return;
-    await fetch("http://127.0.0.1:5001/courses", {
+    await fetch("https://saps-backend-qcci.onrender.com/courses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: newCourse, user_id: user.id, role: "lecturer" }),
@@ -49,7 +49,7 @@ function LecturerDashboard({ user, onLogout }) {
   };
 
   const handleDeleteCourse = async (id) => {
-    await fetch(`http://127.0.0.1:5001/courses/${id}`, { method: "DELETE" });
+    await fetch(`https://saps-backend-qcci.onrender.com/courses/${id}`, { method: "DELETE" });
     fetchCourses();
     if (activeCourse?.id === id) {
       setActiveCourse(null);
@@ -75,7 +75,7 @@ function LecturerDashboard({ user, onLogout }) {
 
     setLoading(true);
     try {
-      const res = await fetch("http://127.0.0.1:5000/predict", {
+      const res = await fetch("https://saps-ml.onrender.com/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -87,7 +87,7 @@ function LecturerDashboard({ user, onLogout }) {
       const data = await res.json();
       setPrediction(data);
 
-      await fetch("http://127.0.0.1:5001/students", {
+      await fetch("https://saps-backend-qcci.onrender.com/students", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

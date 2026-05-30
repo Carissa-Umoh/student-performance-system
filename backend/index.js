@@ -341,5 +341,5 @@ app.get("/users", (req, res) => {
 });
 
 app.listen(5001, () => {
-  console.log("Backend running on http://127.0.0.1:5001");
+  console.log("Backend running on https://saps-backend-qcci.onrender.com");
 });

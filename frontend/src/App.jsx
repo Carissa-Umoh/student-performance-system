@@ -21,7 +21,7 @@ function App() {
   const [students, setStudents] = useState([]);
 
   const fetchStudents = async () => {
-    const res = await fetch("http://127.0.0.1:5001/students");
+    const res = await fetch("https://saps-backend-qcci.onrender.com/students");
     const data = await res.json();
     setStudents(data);
   };
@@ -31,7 +31,7 @@ function App() {
   }, []);
 
   const handleLogin = async () => {
-    const res = await fetch("http://127.0.0.1:5001/login", {
+    const res = await fetch("https://saps-backend-qcci.onrender.com/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -58,7 +58,7 @@ function App() {
 
     setLoading(true);
     try {
-      const res = await fetch("http://127.0.0.1:5000/predict", {
+      const res = await fetch("https://saps-ml.onrender.com/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -70,7 +70,7 @@ function App() {
       const data = await res.json();
       setPrediction(data);
 
-      await fetch("http://127.0.0.1:5001/students", {
+      await fetch("https://saps-backend-qcci.onrender.com/students", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -91,7 +91,7 @@ function App() {
   };
 
   const handleDelete = async (id) => {
-    await fetch(`http://127.0.0.1:5001/students/${id}`, { method: "DELETE" });
+    await fetch(`https://saps-backend-qcci.onrender.com/students/${id}`, { method: "DELETE" });
     fetchStudents();
   };
 

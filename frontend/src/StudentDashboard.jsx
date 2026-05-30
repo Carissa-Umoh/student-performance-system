@@ -13,13 +13,13 @@ function StudentDashboard({ user, onLogout }) {
   const [page, setPage] = useState("dashboard");
 
   const fetchCourses = async () => {
-    const res = await fetch(`http://127.0.0.1:5001/courses/${user.id}`);
+    const res = await fetch(`https://saps-backend-qcci.onrender.com/courses/${user.id}`);
     const data = await res.json();
     setCourses(data);
   };
 
   const fetchScores = async () => {
-    const res = await fetch(`http://127.0.0.1:5001/my-scores/${user.id}`);
+    const res = await fetch(`https://saps-backend-qcci.onrender.com/my-scores/${user.id}`);
     const data = await res.json();
     setScores(data);
   };
@@ -31,7 +31,7 @@ function StudentDashboard({ user, onLogout }) {
 
   const handleAddCourse = async () => {
     if (!newCourse.trim()) return;
-    const res = await fetch("http://127.0.0.1:5001/courses/join", {
+    const res = await fetch("https://saps-backend-qcci.onrender.com/courses/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code: newCourse.toUpperCase(), user_id: user.id }),
@@ -46,7 +46,7 @@ function StudentDashboard({ user, onLogout }) {
   };
 
   const handleDeleteCourse = async (id) => {
-    await fetch(`http://127.0.0.1:5001/courses/${id}`, { method: "DELETE" });
+    await fetch(`https://saps-backend-qcci.onrender.com/courses/${id}`, { method: "DELETE" });
     fetchCourses();
     fetchScores();
   };
@@ -103,7 +103,7 @@ function StudentDashboard({ user, onLogout }) {
 
       setPrediction(result);
 
-      await fetch("http://127.0.0.1:5001/course-scores", {
+      await fetch("https://saps-backend-qcci.onrender.com/course-scores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
