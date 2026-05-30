@@ -1,3 +1,4 @@
+import sapsLogo from "./assets/saps-logo.png";
 import { useState, useEffect } from "react";
 import Chatbot from "./Chatbot";
 import Workspace from "./Workspace";
@@ -159,8 +160,8 @@ function LecturerDashboard({ user, onLogout }) {
     <div className="flex min-h-screen">
       <div className="w-64 bg-indigo-900 text-white flex flex-col p-6 gap-2">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold">🎓 EduPredict</h2>
-          <p className="text-indigo-300 text-xs mt-1">AI Performance System</p>
+          <div className="flex items-center gap-1 mb-0"><img src={sapsLogo} alt="SAPS" className="w-20 h-20 object-contain" /><h2 className="text-2xl font-bold">SAPS</h2></div>
+          <p className="text-indigo-300 text-xs mt-1">Student Academic Performance and Prediction System</p>
         </div>
 
         <div className="bg-indigo-800 rounded-xl p-3 mb-4">
@@ -173,7 +174,7 @@ function LecturerDashboard({ user, onLogout }) {
           <span>📊</span> Dashboard
         </button>
         <button onClick={() => setPage("chatbot")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "chatbot" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
-          <span>🤖</span> AI Mentor
+          AI Mentor
         </button>
         <button onClick={() => setPage("workspace")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "workspace" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
           <span>📚</span> AI Workspace
@@ -181,7 +182,7 @@ function LecturerDashboard({ user, onLogout }) {
 
         <div className="mt-auto">
           <button onClick={onLogout} className="w-full text-left px-4 py-3 rounded-xl hover:bg-indigo-800 transition flex items-center gap-3 text-indigo-200 text-sm">
-            <span>🚪</span> Logout
+            Logout
           </button>
         </div>
       </div>

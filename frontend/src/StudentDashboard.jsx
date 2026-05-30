@@ -1,10 +1,12 @@
+import sapsLogo from "./assets/saps-logo.jpeg";
 import { useState, useEffect } from "react";
 import Chatbot from "./Chatbot";
 
 function StudentDashboard({ user, onLogout }) {
   const [courses, setCourses] = useState([]);
   const [scores, setScores] = useState([]);
-  const [newCourse, setNewCourse] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
   const [activeCourse, setActiveCourse] = useState(null);
   const [ca, setCa] = useState("");
   const [participation, setParticipation] = useState("");
@@ -24,24 +26,61 @@ function StudentDashboard({ user, onLogout }) {
     setScores(data);
   };
 
+  const handleSearch = async (query) => {
+    setSearchQuery(query);
+    if (query.trim().length < 2) { setSearchResults([]); return; }
+    const res = await fetch(`https://saps-backend-qcci.onrender.com/courses/search?q=${query}`);
+    const data = await res.json();
+    const joinedCodes = courses.map(c => c.code);
+    setSearchResults(data.filter(c => !joinedCodes.includes(c.code)));
+  };
+
+  const handleJoinCourse = async (course) => {
+    const res = await fetch("https://saps-backend-qcci.onrender.com/courses/join", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: course.code, user_id: user.id }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setSearchQuery("");
+      setSearchResults([]);
+      fetchCourses();
+    } else {
+      alert(data.message);
+    }
+  };
+
   useEffect(() => {
     fetchCourses();
     fetchScores();
   }, []);
 
-  const handleAddCourse = async () => {
-    if (!newCourse.trim()) return;
-    const res = await fetch("https://saps-backend-qcci.onrender.com/courses/join", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: newCourse.toUpperCase(), user_id: user.id }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      setNewCourse("");
-      fetchCourses();
+  const handleSelectCourse = (course) => {
+    setActiveCourse(course);
+    const existingScore = getCourseScore(course.id);
+    if (existingScore) {
+      const currentTotal = existingScore.total;
+      const neededForE = Math.max(0, 40 - currentTotal);
+      const neededForD = Math.max(0, 45 - currentTotal);
+      const neededForC = Math.max(0, 50 - currentTotal);
+      const neededForB = Math.max(0, 60 - currentTotal);
+      const neededForA = Math.max(0, 70 - currentTotal);
+      setPrediction({
+        currentTotal,
+        prediction: existingScore.prediction,
+        neededForE: neededForE > 65 ? "Not possible" : neededForE,
+        neededForD: neededForD > 65 ? "Not possible" : neededForD,
+        neededForC: neededForC > 65 ? "Not possible" : neededForC,
+        neededForB: neededForB > 65 ? "Not possible" : neededForB,
+        neededForA: neededForA > 65 ? "Not possible" : neededForA,
+      });
+      setCa(existingScore.ca);
+      setParticipation(existingScore.participation);
     } else {
-      alert(data.message);
+      setPrediction(null);
+      setCa("");
+      setParticipation("");
     }
   };
 
@@ -49,6 +88,10 @@ function StudentDashboard({ user, onLogout }) {
     await fetch(`https://saps-backend-qcci.onrender.com/courses/${id}`, { method: "DELETE" });
     fetchCourses();
     fetchScores();
+    if (activeCourse?.id === id) {
+      setActiveCourse(null);
+      setPrediction(null);
+    }
   };
 
   const handlePredict = async () => {
@@ -75,7 +118,6 @@ function StudentDashboard({ user, onLogout }) {
       const caNum = Number(ca);
       const partNum = Number(participation);
       const currentTotal = caNum + partNum;
-      const maxPossible = currentTotal + 65;
 
       const getStanding = () => {
         if (currentTotal < 10) return "Fail";
@@ -92,7 +134,6 @@ function StudentDashboard({ user, onLogout }) {
 
       const result = {
         currentTotal,
-        maxPossible,
         prediction: getStanding(),
         neededForE: neededForE > 65 ? "Not possible" : neededForE,
         neededForD: neededForD > 65 ? "Not possible" : neededForD,
@@ -155,8 +196,11 @@ function StudentDashboard({ user, onLogout }) {
     <div className="flex min-h-screen">
       <div className="w-64 bg-indigo-900 text-white flex flex-col p-6 gap-2">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold">🎓 EduPredict</h2>
-          <p className="text-indigo-300 text-xs mt-1">AI Performance System</p>
+          <div className="flex items-center gap-1 mb-0">
+            <img src={sapsLogo} alt="SAPS" className="w-20 h-20 object-contain" />
+            <h2 className="text-2xl font-bold">SAPS</h2>
+          </div>
+          <p className="text-indigo-300 text-xs mt-1">Student Academic Performance and Prediction System</p>
         </div>
 
         <div className="bg-indigo-800 rounded-xl p-3 mb-4">
@@ -166,15 +210,15 @@ function StudentDashboard({ user, onLogout }) {
         </div>
 
         <button onClick={() => setPage("dashboard")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "dashboard" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
-          <span>📊</span> My Dashboard
+          My Dashboard
         </button>
         <button onClick={() => setPage("chatbot")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "chatbot" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
-          <span>🤖</span> AI Mentor
+          AI Mentor
         </button>
 
         <div className="mt-auto">
           <button onClick={onLogout} className="w-full text-left px-4 py-3 rounded-xl hover:bg-indigo-800 transition flex items-center gap-3 text-indigo-200 text-sm">
-            <span>🚪</span> Logout
+            Logout
           </button>
         </div>
       </div>
@@ -193,30 +237,45 @@ function StudentDashboard({ user, onLogout }) {
               <p className="text-3xl font-bold text-indigo-600">{courses.length}</p>
             </div>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <p className="text-sm text-gray-500 mb-1">🟢 On Track</p>
+              <p className="text-sm text-gray-500 mb-1">On Track</p>
               <p className="text-3xl font-bold text-green-500">{scores.filter(s => s.prediction === "Distinction Possible" || s.prediction === "Pass Possible").length}</p>
             </div>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <p className="text-sm text-gray-500 mb-1">⚠️ Need Attention</p>
+              <p className="text-sm text-gray-500 mb-1">Need Attention</p>
               <p className="text-3xl font-bold text-red-400">{scores.filter(s => s.prediction === "At Risk" || s.prediction === "Fail").length}</p>
             </div>
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-2">Join a Course</h2>
-            <p className="text-gray-400 text-sm mb-3">Enter the course code given to you by your lecturer</p>
-            <div className="flex gap-3">
+            <p className="text-gray-400 text-sm mb-3">Search for a course to join</p>
+            <div className="relative">
               <input
                 type="text"
-                value={newCourse}
-                onChange={(e) => setNewCourse(e.target.value.toUpperCase())}
-                placeholder="Enter course code e.g. AB12CD"
-                className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50 uppercase"
-                onKeyDown={(e) => e.key === "Enter" && handleAddCourse()}
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Search by course name e.g. MTH101, Mathematics"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50"
               />
-              <button onClick={handleAddCourse} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2.5 rounded-xl transition">
-                Join Course
-              </button>
+              {searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl mt-1 shadow-lg z-10">
+                  {searchResults.map((course) => (
+                    <div
+                      key={course.id}
+                      onClick={() => handleJoinCourse(course)}
+                      className="p-3 hover:bg-indigo-50 cursor-pointer border-b last:border-0 rounded-xl"
+                    >
+                      <p className="font-medium text-gray-800 text-sm">{course.name}</p>
+                      <p className="text-xs text-gray-400">Code: {course.code}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {searchQuery.length >= 2 && searchResults.length === 0 && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl mt-1 shadow-lg z-10 p-3">
+                  <p className="text-gray-400 text-sm text-center">No courses found</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -225,7 +284,7 @@ function StudentDashboard({ user, onLogout }) {
               <h2 className="text-lg font-semibold text-gray-800 mb-4">My Courses</h2>
               <div className="space-y-2">
                 {courses.length === 0 ? (
-                  <p className="text-gray-400 text-sm text-center py-4">No courses yet. Join one above!</p>
+                  <p className="text-gray-400 text-sm text-center py-4">No courses yet. Search and join one above!</p>
                 ) : (
                   courses.map((course) => {
                     const score = getCourseScore(course.id);
@@ -233,16 +292,16 @@ function StudentDashboard({ user, onLogout }) {
                     return (
                       <div
                         key={course.id}
-                        onClick={() => { setActiveCourse(course); setPrediction(null); setCa(""); setParticipation(""); }}
+                        onClick={() => handleSelectCourse(course)}
                         className={`p-3 rounded-xl border cursor-pointer transition ${activeCourse?.id === course.id ? "border-indigo-400 bg-indigo-50" : "border-gray-100 hover:bg-gray-50"}`}
                       >
                         <div className="flex justify-between items-center">
                           <span className="font-medium text-gray-800 text-sm">{course.name}</span>
                           <div className="flex items-center gap-2">
-                            {locked && <span className="text-xs text-gray-400">🔒 Locked</span>}
+                            {locked && <span className="text-xs text-gray-400">🔒</span>}
                             {score && (
                               <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${getResultColor(score.prediction)}`}>
-                                {getResultBadge(score.prediction)} {score.prediction}
+                                {score.prediction}
                               </span>
                             )}
                             <button
@@ -254,7 +313,7 @@ function StudentDashboard({ user, onLogout }) {
                           </div>
                         </div>
                         {score && (
-                          <p className="text-xs text-gray-400 mt-1">CA: {score.ca}/30 · Participation: {score.participation}/5 · Current: {score.total}/35</p>
+                          <p className="text-xs text-gray-400 mt-1">CA: {score.ca}/30 · Participation: {score.participation}/5 · Total: {score.total}/35</p>
                         )}
                       </div>
                     );
@@ -266,17 +325,19 @@ function StudentDashboard({ user, onLogout }) {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               {activeCourse ? (
                 <>
-                  <h2 className="text-lg font-semibold text-gray-800 mb-1">📚 {activeCourse.name}</h2>
-                  <p className="text-gray-400 text-sm mb-4">Enter your scores to see your prediction</p>
+                  <h2 className="text-lg font-semibold text-gray-800 mb-1">{activeCourse.name}</h2>
+                  <p className="text-gray-400 text-sm mb-4">
+                    {getCourseScore(activeCourse.id) ? "Your current prediction" : "Enter your scores to see your prediction"}
+                  </p>
 
                   {isLocked(activeCourse.id) ? (
-                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center mb-4">
                       <p className="text-2xl mb-2">🔒</p>
                       <p className="text-gray-600 font-medium">Scores Locked</p>
-                      <p className="text-gray-400 text-sm mt-1">You have used your one allowed update. Your scores are now final.</p>
+                      <p className="text-gray-400 text-sm mt-1">Your scores are now final.</p>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-3 mb-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-600 mb-1">CA Score <span className="text-gray-400">(out of 30)</span></label>
                         <input type="number" value={ca} onChange={(e) => setCa(e.target.value)} placeholder="0 - 30" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
@@ -286,23 +347,23 @@ function StudentDashboard({ user, onLogout }) {
                         <input type="number" value={participation} onChange={(e) => setParticipation(e.target.value)} placeholder="0 - 5" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
                       </div>
                       <button onClick={handlePredict} disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition duration-200">
-                        {loading ? "Predicting..." : "⚡ Check My Standing"}
+                        {loading ? "Predicting..." : "Check My Standing"}
                       </button>
                     </div>
                   )}
 
                   {prediction && (
-                    <div className={`mt-4 p-4 rounded-xl border-2 ${getResultColor(prediction.prediction)}`}>
+                    <div className={`p-4 rounded-xl border-2 ${getResultColor(prediction.prediction)}`}>
                       <div className="text-center font-bold text-lg mb-3">
                         {getResultBadge(prediction.prediction)} Current Standing: {prediction.prediction}
                       </div>
                       <div className="text-sm text-gray-700 space-y-1 bg-white rounded-lg p-3">
-                        <p className="font-medium text-gray-600 mb-2">📊 You currently have <strong>{prediction.currentTotal}/35</strong> before the exam:</p>
-                        <p>🎯 To get an E (40+): <strong>{prediction.neededForE === 0 ? "✅ Already there!" : prediction.neededForE === "Not possible" ? "❌ Not achievable" : `${prediction.neededForE}/65 in exam`}</strong></p>
-                        <p>🎯 To get a D (Pass 45+): <strong>{prediction.neededForD === 0 ? "✅ Already there!" : prediction.neededForD === "Not possible" ? "❌ Not achievable" : `${prediction.neededForD}/65 in exam`}</strong></p>
-                        <p>📘 To get a C (50+): <strong>{prediction.neededForC === 0 ? "✅ Already there!" : prediction.neededForC === "Not possible" ? "❌ Not achievable" : `${prediction.neededForC}/65 in exam`}</strong></p>
-                        <p>📗 To get a B (60+): <strong>{prediction.neededForB === 0 ? "✅ Already there!" : prediction.neededForB === "Not possible" ? "❌ Not achievable" : `${prediction.neededForB}/65 in exam`}</strong></p>
-                        <p>🏆 To get an A (70+): <strong>{prediction.neededForA === 0 ? "✅ Already there!" : prediction.neededForA === "Not possible" ? "❌ Not achievable" : `${prediction.neededForA}/65 in exam`}</strong></p>
+                        <p className="font-medium text-gray-600 mb-2">You currently have <strong>{prediction.currentTotal}/35</strong> before the exam:</p>
+                        <p>To get an E (40+): <strong>{prediction.neededForE === 0 ? "✅ Already there!" : prediction.neededForE === "Not possible" ? "❌ Not achievable" : `${prediction.neededForE}/65 in exam`}</strong></p>
+                        <p>To get a D (Pass 45+): <strong>{prediction.neededForD === 0 ? "✅ Already there!" : prediction.neededForD === "Not possible" ? "❌ Not achievable" : `${prediction.neededForD}/65 in exam`}</strong></p>
+                        <p>To get a C (50+): <strong>{prediction.neededForC === 0 ? "✅ Already there!" : prediction.neededForC === "Not possible" ? "❌ Not achievable" : `${prediction.neededForC}/65 in exam`}</strong></p>
+                        <p>To get a B (60+): <strong>{prediction.neededForB === 0 ? "✅ Already there!" : prediction.neededForB === "Not possible" ? "❌ Not achievable" : `${prediction.neededForB}/65 in exam`}</strong></p>
+                        <p>To get an A (70+): <strong>{prediction.neededForA === 0 ? "✅ Already there!" : prediction.neededForA === "Not possible" ? "❌ Not achievable" : `${prediction.neededForA}/65 in exam`}</strong></p>
                       </div>
 
                       {(prediction.prediction === "At Risk" || prediction.prediction === "Fail") && (
@@ -310,7 +371,7 @@ function StudentDashboard({ user, onLogout }) {
                           <p className="font-semibold text-yellow-700 mb-1">⚠️ Recommendation</p>
                           <p className="text-yellow-600">You may benefit from <strong>peer-to-peer tutoring</strong> sessions. Connect with top-performing classmates or visit the AI Mentor for personalized academic support.</p>
                           <button onClick={() => setPage("chatbot")} className="mt-2 text-sm bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition">
-                            💬 Ask AI Mentor for Help
+                            Ask AI Mentor for Help
                           </button>
                         </div>
                       )}
@@ -319,7 +380,6 @@ function StudentDashboard({ user, onLogout }) {
                 </>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center">
-                  <p className="text-4xl mb-3">👈</p>
                   <p className="text-gray-400">Select a course to check your standing</p>
                 </div>
               )}

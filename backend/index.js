@@ -204,6 +204,17 @@ app.get("/courses/code/:code", (req, res) => {
   res.json({ success: true, course });
 });
 
+// Search courses by name or code
+app.get("/courses/search", (req, res) => {
+  const { q } = req.query;
+  const courses = db.prepare(`
+    SELECT * FROM courses 
+    WHERE role = 'lecturer' AND (name LIKE ? OR code LIKE ?)
+  `).all(`%${q}%`, `%${q}%`);
+  res.json(courses);
+});
+
+
 // Get courses for a user
 app.get("/courses/:userId", (req, res) => {
   const courses = db.prepare("SELECT * FROM courses WHERE user_id = ?").all(req.params.userId);
@@ -339,6 +350,8 @@ app.get("/users", (req, res) => {
   const users = db.prepare("SELECT id, name, email, role FROM users").all();
   res.json(users);
 });
+
+
 
 app.listen(5001, () => {
   console.log("Backend running on https://saps-backend-qcci.onrender.com");

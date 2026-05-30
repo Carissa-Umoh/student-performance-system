@@ -1,3 +1,4 @@
+import sapsLogo from "./assets/saps-logo.png";
 import { useState, useEffect } from "react";
 import { PieChart, Pie, Cell, Legend, Tooltip } from "recharts";
 import Chatbot from "./Chatbot";
@@ -130,13 +131,13 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-700 to-blue-500 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="text-6xl mb-4">🎓</div>
-            <h1 className="text-4xl font-bold text-white">EduPredict</h1>
-            <p className="text-indigo-200 mt-2">AI-Powered Student Performance System</p>
+            <img src={sapsLogo} alt="SAPS" className="w-48 h-48 object-contain mx-auto mb-1" />
+            <h1 className="text-4xl font-bold text-white">SAPS</h1>
+            <p className="text-indigo-200 mt-2">Student Academic Performance and Prediction System</p>
           </div>
 
           <div className="bg-white rounded-3xl shadow-2xl p-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">EduPredict Login</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">SAPS Login</h2>
             <p className="text-gray-400 text-sm mb-6">Sign in with your university credentials. Contact your administrator if you need access.</p>
             <div className="space-y-4">
               <div>
@@ -174,8 +175,8 @@ function App() {
     <div className="flex min-h-screen">
       <div className="w-64 bg-indigo-900 text-white flex flex-col p-6 gap-2">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold">🎓 EduPredict</h2>
-          <p className="text-indigo-300 text-xs mt-1">AI Performance System</p>
+          <div className="flex items-center gap-1 mb-0"><img src={sapsLogo} alt="SAPS" className="w-20 h-20 object-contain" /><h2 className="text-2xl font-bold">SAPS</h2></div>
+          <p className="text-indigo-300 text-xs mt-1">Student Academic Performance and Prediction System</p>
         </div>
 
         <div className="bg-indigo-800 rounded-xl p-3 mb-4">
@@ -188,7 +189,7 @@ function App() {
           <span>📊</span> Dashboard
         </button>
         <button onClick={() => setPage("chatbot")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "chatbot" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
-          <span>🤖</span> AI Mentor
+          AI Mentor
         </button>
         <button onClick={() => setPage("workspace")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "workspace" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
           <span>📚</span> AI Workspace
@@ -196,7 +197,7 @@ function App() {
 
         <div className="mt-auto">
           <button onClick={handleLogout} className="w-full text-left px-4 py-3 rounded-xl hover:bg-indigo-800 transition flex items-center gap-3 text-indigo-200 text-sm">
-            <span>🚪</span> Logout
+            Logout
           </button>
         </div>
       </div>
