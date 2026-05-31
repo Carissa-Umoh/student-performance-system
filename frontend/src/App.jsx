@@ -192,7 +192,7 @@ function App() {
           AI Mentor
         </button>
         <button onClick={() => setPage("workspace")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "workspace" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
-          <span>📚</span> AI Workspace
+          <span>📚</span> 📚 AI Workspace
         </button>
 
         <div className="mt-auto">
@@ -255,7 +255,7 @@ function App() {
                   </div>
                 </div>
                 <button onClick={handlePredict} disabled={loading} className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition duration-200">
-                  {loading ? "Predicting..." : "⚡ Predict Performance"}
+                  {loading ? "Predicting..." : "Predict Performance"}
                 </button>
 
                 {prediction && (

@@ -210,7 +210,7 @@ function StudentDashboard({ user, onLogout }) {
         </div>
 
         <button onClick={() => setPage("dashboard")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "dashboard" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
-          My Dashboard
+          📊 My Dashboard
         </button>
         <button onClick={() => setPage("chatbot")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "chatbot" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
           AI Mentor
@@ -241,7 +241,7 @@ function StudentDashboard({ user, onLogout }) {
               <p className="text-3xl font-bold text-green-500">{scores.filter(s => s.prediction === "Distinction Possible" || s.prediction === "Pass Possible").length}</p>
             </div>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <p className="text-sm text-gray-500 mb-1">Need Attention</p>
+              <p className="text-sm text-gray-500 mb-1">⚠️ Need Attention</p>
               <p className="text-3xl font-bold text-red-400">{scores.filter(s => s.prediction === "At Risk" || s.prediction === "Fail").length}</p>
             </div>
           </div>

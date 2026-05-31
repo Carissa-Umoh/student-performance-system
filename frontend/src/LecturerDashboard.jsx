@@ -177,7 +177,7 @@ function LecturerDashboard({ user, onLogout }) {
           AI Mentor
         </button>
         <button onClick={() => setPage("workspace")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "workspace" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
-          <span>📚</span> AI Workspace
+          <span>📚</span> 📚 AI Workspace
         </button>
 
         <div className="mt-auto">
@@ -325,7 +325,7 @@ function LecturerDashboard({ user, onLogout }) {
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                ⚡ Manual Prediction {activeCourse ? `— ${activeCourse.name}` : ""}
+                Manual Prediction {activeCourse ? `— ${activeCourse.name}` : ""}
               </h2>
               {!activeCourse && (
                 <p className="text-gray-400 text-sm mb-4">Select a course first to save the prediction to that course</p>
@@ -350,7 +350,7 @@ function LecturerDashboard({ user, onLogout }) {
               </div>
 
               <button onClick={handlePredict} disabled={loading} className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition duration-200">
-                {loading ? "Predicting..." : "⚡ Predict Performance"}
+                {loading ? "Predicting..." : "Predict Performance"}
               </button>
 
               {prediction && (

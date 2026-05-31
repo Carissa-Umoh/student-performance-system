@@ -25,7 +25,7 @@ SAPS helps students understand where they stand academically before their exams.
 - 🔐 Role-based login (Student, Lecturer, Admin)
 - 📊 Performance analytics and charts
 - 🤖 AI Academic Mentor chatbot
-- 📝 Educational AI Workspace (note summarizer, study plan generator)
+- 📝 Educational 📚 AI Workspace (note summarizer, study plan generator)
 - 📥 CSV export for student records
 - 🔗 Course code system for student-lecturer linking
 

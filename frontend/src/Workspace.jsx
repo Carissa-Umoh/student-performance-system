@@ -57,7 +57,7 @@ function Workspace() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Educational AI Workspace</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Educational 📚 AI Workspace</h1>
         <p className="text-gray-500 mt-1">AI-powered tools to support student learning</p>
       </div>
 
