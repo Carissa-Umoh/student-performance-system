@@ -1,4 +1,4 @@
-import sapsLogo from "./assets/saps-logo.jpeg";
+import sapsLogo from "./assets/saps-logo.png";
 import { useState, useEffect } from "react";
 import Chatbot from "./Chatbot";
 
