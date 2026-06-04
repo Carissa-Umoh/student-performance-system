@@ -119,12 +119,18 @@ function StudentDashboard({ user, onLogout }) {
       const partNum = Number(participation);
       const currentTotal = caNum + partNum;
 
-      const getStanding = () => {
-        if (currentTotal < 10) return "Fail";
-        if (currentTotal < 15) return "At Risk";
-        if (currentTotal < 25) return "Pass Possible";
-        return "Distinction Possible";
-      };
+      const res = await fetch("https://saps-ml.onrender.com/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+      ca: caNum,
+      participation: partNum,
+      exam: 0
+    }),
+  });
+
+const data = await res.json();
+
 
       const neededForE = Math.max(0, 40 - currentTotal);
       const neededForD = Math.max(0, 45 - currentTotal);
@@ -134,7 +140,7 @@ function StudentDashboard({ user, onLogout }) {
 
       const result = {
         currentTotal,
-        prediction: getStanding(),
+        prediction: data.prediction,
         neededForE: neededForE > 65 ? "Not possible" : neededForE,
         neededForD: neededForD > 65 ? "Not possible" : neededForD,
         neededForC: neededForC > 65 ? "Not possible" : neededForC,
@@ -153,7 +159,7 @@ function StudentDashboard({ user, onLogout }) {
           ca: caNum,
           participation: partNum,
           exam: 0,
-          prediction: getStanding(),
+          prediction: data.prediction,
           grade: "",
           total: currentTotal,
           needed: neededForD > 65 ? 0 : neededForD,
@@ -168,16 +174,16 @@ function StudentDashboard({ user, onLogout }) {
   };
 
   const getResultColor = (result) => {
-    if (result === "Distinction Possible") return "bg-green-100 text-green-700 border-green-400";
-    if (result === "Pass Possible") return "bg-blue-100 text-blue-700 border-blue-400";
+    if (result === "Distinction") return "bg-green-100 text-green-700 border-green-400";
+    if (result === "Pass") return "bg-blue-100 text-blue-700 border-blue-400";
     if (result === "At Risk") return "bg-yellow-100 text-yellow-700 border-yellow-400";
     if (result === "Fail") return "bg-red-100 text-red-700 border-red-400";
     return "bg-gray-100 text-gray-700";
   };
 
   const getResultBadge = (result) => {
-    if (result === "Distinction Possible") return "🟢";
-    if (result === "Pass Possible") return "🔵";
+    if (result === "Distinction") return "🟢";
+    if (result === "Pass") return "🔵";
     if (result === "At Risk") return "🟡";
     if (result === "Fail") return "🔴";
     return "";
@@ -238,7 +244,7 @@ function StudentDashboard({ user, onLogout }) {
             </div>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <p className="text-sm text-gray-500 mb-1">On Track</p>
-              <p className="text-3xl font-bold text-green-500">{scores.filter(s => s.prediction === "Distinction Possible" || s.prediction === "Pass Possible").length}</p>
+              <p className="text-3xl font-bold text-green-500">{scores.filter(s => s.prediction === "Distinction" || s.prediction === "Pass").length}</p>
             </div>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <p className="text-sm text-gray-500 mb-1">⚠️ Need Attention</p>

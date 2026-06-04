@@ -45,11 +45,11 @@ def predict():
 
     ca = float(data["ca"])
     participation = float(data["participation"])
-    exam = float(data["exam"])
+    exam = float(data.get("exam", 0))
 
     total = ca + participation + exam
 
-    features = np.array([[ca, participation, exam]])
+    features = np.array([[ca, participation]])
     prediction = model.predict(features)[0]
 
     grade = get_grade(total)
@@ -57,7 +57,7 @@ def predict():
     needed = marks_to_next_grade(total)
 
     return jsonify({
-        "prediction": performance,
+        "prediction": prediction,
         "grade": grade,
         "total": round(total, 1),
         "needed": needed
