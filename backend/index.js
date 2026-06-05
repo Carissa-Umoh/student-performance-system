@@ -1,6 +1,7 @@
 const fetch = require("node-fetch");
 const express = require("express");
 const cors = require("cors");
+const { PythonShell } = require('python-shell');
 
 const app = express();
 app.use(cors());
@@ -433,43 +434,49 @@ app.get("/users", async (req, res) => {
 });
 
 // ML Prediction endpoint
+// ML Prediction endpoint using actual trained model
 app.post("/predict", async (req, res) => {
   const { ca, participation, exam } = req.body;
   
-  const total = ca + participation + (exam || 0);
+  const options = {
+    mode: 'text',
+    pythonOptions: ['-u'],
+    args: [JSON.stringify({ ca, participation, exam })]
+  };
   
-  let prediction;
-  let grade;
-  let needed;
-  
-  // Calculate based on total score
-  if (total >= 70) {
-    prediction = "Distinction";
-    grade = "A";
-    needed = 0;
-  } else if (total >= 60) {
-    prediction = "Pass";
-    grade = "B";
-    needed = Math.ceil(70 - total);
-  } else if (total >= 45) {
-    prediction = "At Risk";
-    grade = "C";
-    needed = Math.ceil(60 - total);
-  } else if (total >= 40) {
-    prediction = "At Risk";
-    grade = "D";
-    needed = Math.ceil(45 - total);
-  } else {
-    prediction = "Fail";
-    grade = "F";
-    needed = Math.ceil(40 - total);
-  }
-  
-  res.json({
-    prediction: prediction,
-    grade: grade,
-    total: total,
-    needed: needed > 0 ? needed : 0
+  PythonShell.run('ml_predict.py', options).then(messages => {
+    // messages is an array of strings printed to stdout
+    const result = JSON.parse(messages[0]);
+    res.json(result);
+  }).catch(err => {
+    console.error("Prediction error:", err);
+    // Fallback to rule-based if ML fails
+    const total = ca + participation + (exam || 0);
+    let prediction, grade, needed;
+    
+    if (total >= 70) {
+      prediction = "Distinction";
+      grade = "A";
+      needed = 0;
+    } else if (total >= 60) {
+      prediction = "Pass";
+      grade = "B";
+      needed = Math.ceil(70 - total);
+    } else if (total >= 45) {
+      prediction = "At Risk";
+      grade = "C";
+      needed = Math.ceil(60 - total);
+    } else if (total >= 40) {
+      prediction = "At Risk";
+      grade = "D";
+      needed = Math.ceil(45 - total);
+    } else {
+      prediction = "Fail";
+      grade = "F";
+      needed = Math.ceil(40 - total);
+    }
+    
+    res.json({ prediction, grade, total, needed });
   });
 });
 
