@@ -7,12 +7,6 @@ function LecturerDashboard({ user, onLogout }) {
   const [newCourse, setNewCourse] = useState("");
   const [activeCourse, setActiveCourse] = useState(null);
   const [courseStudents, setCourseStudents] = useState([]);
-  const [name, setName] = useState("");
-  const [ca, setCa] = useState("");
-  const [participation, setParticipation] = useState("");
-  const [exam, setExam] = useState("");
-  const [prediction, setPrediction] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   const fetchCourses = async () => {
     const res = await fetch(`http://127.0.0.1:5001/courses/${user.id}`);
@@ -37,19 +31,19 @@ function LecturerDashboard({ user, onLogout }) {
   }, []);
 
   const handleAddCourse = async () => {
-  if (!newCourse.trim()) return;
-  await fetch("http://127.0.0.1:5001/courses", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ 
-      name: newCourse, 
-      user_id: user.id, 
-      role: "lecturer"  // Make sure role is "lecturer"
-    }),
-  });
-  setNewCourse("");
-  fetchCourses();
-};
+    if (!newCourse.trim()) return;
+    await fetch("http://127.0.0.1:5001/courses", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        name: newCourse, 
+        user_id: user.id, 
+        role: "lecturer"
+      }),
+    });
+    setNewCourse("");
+    fetchCourses();
+  };
 
   const handleDeleteCourse = async (id) => {
     await fetch(`http://127.0.0.1:5001/courses/${id}`, { method: "DELETE" });
@@ -63,49 +57,6 @@ function LecturerDashboard({ user, onLogout }) {
   const handleSelectCourse = (course) => {
     setActiveCourse(course);
     fetchCourseStudents(course.id);
-    setPrediction(null);
-    setName(""); setCa(""); setParticipation(""); setExam("");
-  };
-
-  const handlePredict = async () => {
-    if (!name || !ca || !participation || !exam) {
-      alert("Please fill in all fields");
-      return;
-    }
-    if (Number(ca) > 30) { alert("CA score cannot exceed 30"); return; }
-    if (Number(participation) > 5) { alert("Participation cannot exceed 5"); return; }
-    if (Number(exam) > 65) { alert("Exam score cannot exceed 65"); return; }
-
-    setLoading(true);
-    try {
-      const res = await fetch("http://127.0.0.1:5000/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ca: Number(ca),
-          participation: Number(participation),
-          exam: Number(exam),
-        }),
-      });
-      const data = await res.json();
-      setPrediction(data);
-
-      await fetch("http://127.0.0.1:5001/students", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          math: Number(ca),
-          reading: Number(participation),
-          writing: Number(exam),
-          prediction: data.prediction,
-        }),
-      });
-
-    } catch (error) {
-      alert("Error connecting to API");
-    }
-    setLoading(false);
   };
 
   const handleExport = () => {
@@ -160,9 +111,13 @@ function LecturerDashboard({ user, onLogout }) {
 
   return (
     <div className="flex min-h-screen">
+      {/* Sidebar - Fixed width, no changes needed */}
       <div className="w-64 bg-indigo-900 text-white flex flex-col p-6 gap-2">
         <div className="mb-6">
-          <div className="flex items-center gap-1 mb-0"><img src={sapsLogo} alt="SAPS" className="w-20 h-20 object-contain" /><h2 className="text-2xl font-bold">SAPS</h2></div>
+          <div className="flex items-center gap-1 mb-0">
+            <img src={sapsLogo} alt="SAPS" className="w-20 h-20 object-contain" />
+            <h2 className="text-2xl font-bold">SAPS</h2>
+          </div>
           <p className="text-indigo-300 text-xs mt-1">Student Academic Performance and Prediction System</p>
         </div>
 
@@ -172,7 +127,6 @@ function LecturerDashboard({ user, onLogout }) {
           <span className="bg-indigo-600 text-white text-xs px-2 py-0.5 rounded-full mt-1 inline-block">Lecturer</span>
         </div>
 
-        {/* Only Dashboard button - removed AI Mentor and AI Workspace */}
         <button className="text-left px-4 py-3 rounded-xl transition flex items-center gap-3 bg-indigo-600 text-white">
           <span>📊</span> Dashboard
         </button>
@@ -184,81 +138,92 @@ function LecturerDashboard({ user, onLogout }) {
         </div>
       </div>
 
+      {/* Main Content - Improved spacing */}
       <div className="flex-1 overflow-auto bg-gray-50">
-        <div className="p-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-800">Welcome, {user.name}! 👋</h1>
-            <p className="text-gray-500 mt-1">Manage your courses and monitor student performance</p>
+        <div className="p-6 lg:p-8">
+          {/* Welcome Section - Compact */}
+          <div className="mb-6">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">Welcome, {user.name}! 👋</h1>
+            <p className="text-gray-500 text-sm">Manage your courses and monitor student performance</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">My Courses</h2>
+          {/* Two Column Layout - Better balanced */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* My Courses Section - Improved height usage */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col">
+              <h2 className="text-lg font-semibold text-gray-800 mb-3">My Courses</h2>
               <div className="flex gap-2 mb-4">
                 <input
                   type="text"
                   value={newCourse}
                   onChange={(e) => setNewCourse(e.target.value)}
                   placeholder="Add a course e.g. Mathematics"
-                  className="flex-1 border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50 text-sm"
+                  className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50 text-sm"
                   onKeyDown={(e) => e.key === "Enter" && handleAddCourse()}
                 />
-                <button onClick={handleAddCourse} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium">
-                  Add
+                <button onClick={handleAddCourse} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap">
+                  + Add
                 </button>
               </div>
 
-              <div className="space-y-2">
+              <div className="flex-1 max-h-[400px] overflow-y-auto space-y-2 pr-1">
                 {courses.length === 0 ? (
-                  <p className="text-gray-400 text-sm text-center py-4">No courses yet. Add one above!</p>
+                  <div className="text-center py-8">
+                    <p className="text-4xl mb-2">📚</p>
+                    <p className="text-gray-400 text-sm">No courses yet. Add one above!</p>
+                  </div>
                 ) : (
                   courses.map((course) => (
                     <div
                       key={course.id}
                       onClick={() => handleSelectCourse(course)}
-                      className={`p-3 rounded-xl border cursor-pointer transition ${activeCourse?.id === course.id ? "border-indigo-400 bg-indigo-50" : "border-gray-100 hover:bg-gray-50"}`}
+                      className={`p-3 rounded-xl border cursor-pointer transition-all hover:shadow-md ${activeCourse?.id === course.id ? "border-indigo-400 bg-indigo-50 shadow-sm" : "border-gray-100 hover:bg-gray-50"}`}
                     >
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium text-gray-800 text-sm">📖 {course.name}</span>
-                        <div className="flex items-center gap-2">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <span className="font-medium text-gray-800 text-sm">{course.name}</span>
+                          {course.code && (
+                            <div className="mt-1">
+                              <span className="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                                {course.code}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 ml-2">
                           {course.atRiskCount > 0 && (
-                            <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                            <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap">
                               ⚠️ {course.atRiskCount}
                             </span>
                           )}
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteCourse(course.id); }}
-                            className="text-red-400 hover:text-red-600 text-xs"
+                            className="text-red-400 hover:text-red-600 text-lg leading-none"
                           >
-                            ✕
+                            ×
                           </button>
                         </div>
                       </div>
-                      {course.code && (
-                        <div className="mt-1 flex items-center gap-2">
-                          <span className="text-xs text-gray-400">Course Code:</span>
-                          <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{course.code}</span>
-                        </div>
-                      )}
                     </div>
                   ))
                 )}
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                {activeCourse ? `📊 ${activeCourse.name} — Student Distribution` : "📊 Student Distribution"}
+            {/* Distribution Section - Improved */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+              <h2 className="text-lg font-semibold text-gray-800 mb-3">
+                {activeCourse ? `${activeCourse.name}` : "Student Distribution"}
               </h2>
               {!activeCourse ? (
-                <div className="flex flex-col items-center justify-center h-40 text-center">
-                  <p className="text-4xl mb-2">👈</p>
-                  <p className="text-gray-400">Select a course to see distribution</p>
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <p className="text-5xl mb-3">👈</p>
+                  <p className="text-gray-400 text-sm">Select a course to see distribution</p>
                 </div>
               ) : courseStudents.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-40 text-center">
-                  <p className="text-4xl mb-2">👥</p>
-                  <p className="text-gray-400">No students have checked their standing yet</p>
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <p className="text-5xl mb-3">👥</p>
+                  <p className="text-gray-400 text-sm">No students have checked their standing yet</p>
                 </div>
               ) : (
                 <div>
@@ -266,13 +231,13 @@ function LecturerDashboard({ user, onLogout }) {
                     {Object.entries(getDistribution()).map(([key, value]) => (
                       <div key={key} className={`p-4 rounded-xl border-2 text-center ${getResultColor(key)}`}>
                         <p className="text-2xl font-bold">{value}</p>
-                        <p className="text-sm font-medium">{getResultBadge(key)} {key}</p>
+                        <p className="text-xs font-medium mt-1">{getResultBadge(key)} {key}</p>
                       </div>
                     ))}
                   </div>
                   <div className="bg-indigo-50 rounded-xl p-3 text-center">
-                    <p className="text-sm text-gray-500">Class Average CA Score</p>
-                    <p className="text-2xl font-bold text-indigo-600">
+                    <p className="text-xs text-gray-500">Class Average CA Score</p>
+                    <p className="text-xl font-bold text-indigo-600">
                       {courseStudents.length > 0 ? (courseStudents.reduce((sum, s) => sum + s.ca, 0) / courseStudents.length).toFixed(1) : 0}/30
                     </p>
                   </div>
@@ -281,23 +246,29 @@ function LecturerDashboard({ user, onLogout }) {
             </div>
           </div>
 
+          {/* At Risk Students Section - Full width, improved */}
           {activeCourse && atRiskStudents.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mb-6">
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-5 mb-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold text-red-700">⚠️ Students Needing Attention in {activeCourse.name}</h2>
+                <div>
+                  <h2 className="text-lg font-semibold text-red-700">⚠️ Students Needing Attention</h2>
+                  <p className="text-sm text-red-600 mt-0.5">in {activeCourse.name}</p>
+                </div>
                 <button
                   onClick={handleExport}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-xl transition"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-xl transition flex items-center gap-2"
                 >
                   📥 Export CSV
                 </button>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
                 {atRiskStudents.map((s) => (
-                  <div key={s.id} className="bg-white rounded-xl p-3 flex justify-between items-center">
+                  <div key={s.id} className="bg-white rounded-xl p-3 flex justify-between items-center hover:shadow-sm transition">
                     <div>
                       <p className="font-medium text-gray-800">{s.student_name}</p>
-                      <p className="text-xs text-gray-500">CA: {s.ca}/30 · Participation: {s.participation}/5 · Total: {s.total}/35</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        CA: {s.ca}/30 · Participation: {s.participation}/5 · Total: {s.total}/35
+                      </p>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getResultColor(s.prediction)}`}>
                       {getResultBadge(s.prediction)} {s.prediction}
@@ -308,65 +279,17 @@ function LecturerDashboard({ user, onLogout }) {
             </div>
           )}
 
+          {/* Export Button - Only when needed */}
           {activeCourse && courseStudents.length > 0 && atRiskStudents.length === 0 && (
-            <div className="flex justify-end mb-6">
+            <div className="flex justify-end">
               <button
                 onClick={handleExport}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-xl transition"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-5 py-2.5 rounded-xl transition flex items-center gap-2"
               >
-                📥 Export CSV
+                📥 Export All Records
               </button>
             </div>
           )}
-
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
-              Manual Prediction {activeCourse ? `— ${activeCourse.name}` : ""}
-            </h2>
-            {!activeCourse && (
-              <p className="text-gray-400 text-sm mb-4">Select a course first to save the prediction to that course</p>
-            )}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">Student Name</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter student name" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">CA Score <span className="text-gray-400">(out of 30)</span></label>
-                <input type="number" value={ca} onChange={(e) => setCa(e.target.value)} placeholder="0 - 30" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">Participation <span className="text-gray-400">(out of 5)</span></label>
-                <input type="number" value={participation} onChange={(e) => setParticipation(e.target.value)} placeholder="0 - 5" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">Exam Score <span className="text-gray-400">(out of 65)</span></label>
-                <input type="number" value={exam} onChange={(e) => setExam(e.target.value)} placeholder="0 - 65" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
-              </div>
-            </div>
-
-            <button onClick={handlePredict} disabled={loading} className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition duration-200">
-              {loading ? "Predicting..." : "Predict Performance"}
-            </button>
-
-            {prediction && (
-              <div className={`mt-4 p-4 rounded-xl border-2 ${getResultColor(prediction.prediction)}`}>
-                <div className="text-center text-xl font-bold mb-3">
-                  {getResultBadge(prediction.prediction)} {prediction.prediction} — Grade {prediction.grade}
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="bg-white rounded-lg p-2 text-center">
-                    <p className="text-gray-500">Total Score</p>
-                    <p className="font-bold text-lg">{prediction.total}/100</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-2 text-center">
-                    <p className="text-gray-500">To Next Grade</p>
-                    <p className="font-bold text-lg">{prediction.needed > 0 ? `+${prediction.needed}` : "Top Grade!"}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>
