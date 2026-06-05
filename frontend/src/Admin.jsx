@@ -7,13 +7,13 @@ function Admin({ user, onLogout }) {
   const [page, setPage] = useState("records");
 
   const fetchStudents = async () => {
-    const res = await fetch("https://saps-backend-qcci.onrender.com/all-course-scores");
+    const res = await fetch("http://127.0.0.1:5001/all-course-scores");
     const data = await res.json();
     setStudents(data);
   };
 
   const fetchUsers = async () => {
-    const res = await fetch("https://saps-backend-qcci.onrender.com/users");
+    const res = await fetch("http://127.0.0.1:5001/users");
     const data = await res.json();
     setUsers(data);
   };
@@ -24,7 +24,7 @@ function Admin({ user, onLogout }) {
   }, []);
 
   const handleDelete = async (id) => {
-    await fetch(`https://saps-backend-qcci.onrender.com/students/${id}`, { method: "DELETE" });
+    await fetch(`http://127.0.0.1:5001/students/${id}`, { method: "DELETE" });
     fetchStudents();
   };
 
@@ -42,16 +42,16 @@ function Admin({ user, onLogout }) {
   };
 
   const getResultColor = (result) => {
-    if (result === "Distinction" || result === "Distinction Possible") return "bg-green-100 text-green-700 border-green-400";
-    if (result === "Pass" || result === "Pass Possible") return "bg-blue-100 text-blue-700 border-blue-400";
+    if (result === "Distinction") return "bg-green-100 text-green-700 border-green-400";
+    if (result === "Pass") return "bg-blue-100 text-blue-700 border-blue-400";
     if (result === "At Risk") return "bg-yellow-100 text-yellow-700 border-yellow-400";
     if (result === "Fail") return "bg-red-100 text-red-700 border-red-400";
     return "bg-gray-100 text-gray-700";
   };
 
   const getResultBadge = (result) => {
-    if (result === "Distinction" || result === "Distinction Possible") return "🟢";
-    if (result === "Pass" || result === "Pass Possible") return "🔵";
+    if (result === "Distinction") return "🟢";
+    if (result === "Pass") return "🔵";
     if (result === "At Risk") return "🟡";
     if (result === "Fail") return "🔴";
     return "";
@@ -159,11 +159,11 @@ function Admin({ user, onLogout }) {
                 <p className="text-3xl font-bold text-indigo-600">{students.length}</p>
               </div>
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <p className="text-sm text-gray-500 mb-1">🟢 Distinction Possible</p>
+                <p className="text-sm text-gray-500 mb-1">🟢 Distinction</p>
                 <p className="text-3xl font-bold text-green-500">{students.filter(s => s.prediction === "Distinction Possible").length}</p>
               </div>
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <p className="text-sm text-gray-500 mb-1">🔵 Pass Possible</p>
+                <p className="text-sm text-gray-500 mb-1">🔵 Pass</p>
                 <p className="text-3xl font-bold text-blue-400">{students.filter(s => s.prediction === "Pass Possible").length}</p>
               </div>
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">

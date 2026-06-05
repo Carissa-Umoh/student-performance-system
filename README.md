@@ -9,7 +9,7 @@ An AI-powered full-stack web application that predicts student academic performa
 | Service | URL |
 |---------|-----|
 | Frontend | https://saps-app.vercel.app |
-| Backend API | https://saps-backend-qcci.onrender.com |
+| Backend API | http://127.0.0.1:5001 |
 | ML Service | https://saps-ml.onrender.com |
 
 ---

@@ -1,10 +1,8 @@
 import sapsLogo from "./assets/saps-logo.png";
 import { useState, useEffect } from "react";
-import Chatbot from "./Chatbot";
-import Workspace from "./Workspace";
 
 function LecturerDashboard({ user, onLogout }) {
-  const [page, setPage] = useState("dashboard");
+  console.log("LECTURER DASHBOARD LOADED");
   const [courses, setCourses] = useState([]);
   const [newCourse, setNewCourse] = useState("");
   const [activeCourse, setActiveCourse] = useState(null);
@@ -17,10 +15,10 @@ function LecturerDashboard({ user, onLogout }) {
   const [loading, setLoading] = useState(false);
 
   const fetchCourses = async () => {
-    const res = await fetch(`https://saps-backend-qcci.onrender.com/courses/${user.id}`);
+    const res = await fetch(`http://127.0.0.1:5001/courses/${user.id}`);
     const data = await res.json();
     const coursesWithCounts = await Promise.all(data.map(async (course) => {
-      const scoresRes = await fetch(`https://saps-backend-qcci.onrender.com/course-scores/${course.id}`);
+      const scoresRes = await fetch(`http://127.0.0.1:5001/course-scores/${course.id}`);
       const scores = await scoresRes.json();
       const atRiskCount = scores.filter(s => s.prediction === "At Risk" || s.prediction === "Fail").length;
       return { ...course, atRiskCount };
@@ -29,7 +27,7 @@ function LecturerDashboard({ user, onLogout }) {
   };
 
   const fetchCourseStudents = async (courseId) => {
-    const res = await fetch(`https://saps-backend-qcci.onrender.com/course-scores/${courseId}`);
+    const res = await fetch(`http://127.0.0.1:5001/course-scores/${courseId}`);
     const data = await res.json();
     setCourseStudents(data);
   };
@@ -39,18 +37,22 @@ function LecturerDashboard({ user, onLogout }) {
   }, []);
 
   const handleAddCourse = async () => {
-    if (!newCourse.trim()) return;
-    await fetch("https://saps-backend-qcci.onrender.com/courses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newCourse, user_id: user.id, role: "lecturer" }),
-    });
-    setNewCourse("");
-    fetchCourses();
-  };
+  if (!newCourse.trim()) return;
+  await fetch("http://127.0.0.1:5001/courses", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ 
+      name: newCourse, 
+      user_id: user.id, 
+      role: "lecturer"  // Make sure role is "lecturer"
+    }),
+  });
+  setNewCourse("");
+  fetchCourses();
+};
 
   const handleDeleteCourse = async (id) => {
-    await fetch(`https://saps-backend-qcci.onrender.com/courses/${id}`, { method: "DELETE" });
+    await fetch(`http://127.0.0.1:5001/courses/${id}`, { method: "DELETE" });
     fetchCourses();
     if (activeCourse?.id === id) {
       setActiveCourse(null);
@@ -76,7 +78,7 @@ function LecturerDashboard({ user, onLogout }) {
 
     setLoading(true);
     try {
-      const res = await fetch("https://saps-ml.onrender.com/predict", {
+      const res = await fetch("http://127.0.0.1:5000/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -88,7 +90,7 @@ function LecturerDashboard({ user, onLogout }) {
       const data = await res.json();
       setPrediction(data);
 
-      await fetch("https://saps-backend-qcci.onrender.com/students", {
+      await fetch("http://127.0.0.1:5001/students", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -130,23 +132,23 @@ function LecturerDashboard({ user, onLogout }) {
   };
 
   const getResultColor = (result) => {
-    if (result === "Distinction" || result === "Distinction Possible") return "bg-green-100 text-green-700 border-green-400";
-    if (result === "Pass" || result === "Pass Possible") return "bg-blue-100 text-blue-700 border-blue-400";
+    if (result === "Distinction") return "bg-green-100 text-green-700 border-green-400";
+    if (result === "Pass") return "bg-blue-100 text-blue-700 border-blue-400";
     if (result === "At Risk") return "bg-yellow-100 text-yellow-700 border-yellow-400";
     if (result === "Fail") return "bg-red-100 text-red-700 border-red-400";
     return "bg-gray-100 text-gray-700";
   };
 
   const getResultBadge = (result) => {
-    if (result === "Distinction" || result === "Distinction Possible") return "🟢";
-    if (result === "Pass" || result === "Pass Possible") return "🔵";
+    if (result === "Distinction") return "🟢";
+    if (result === "Pass") return "🔵";
     if (result === "At Risk") return "🟡";
     if (result === "Fail") return "🔴";
     return "";
   };
 
   const getDistribution = () => {
-    const counts = { "Distinction Possible": 0, "Pass Possible": 0, "At Risk": 0, "Fail": 0 };
+    const counts = { "Distinction": 0, "Pass": 0, "At Risk": 0, "Fail": 0 };
     courseStudents.forEach((s) => {
       if (counts[s.prediction] !== undefined) counts[s.prediction]++;
       else counts["At Risk"]++;
@@ -170,14 +172,9 @@ function LecturerDashboard({ user, onLogout }) {
           <span className="bg-indigo-600 text-white text-xs px-2 py-0.5 rounded-full mt-1 inline-block">Lecturer</span>
         </div>
 
-        <button onClick={() => setPage("dashboard")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "dashboard" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
+        {/* Only Dashboard button - removed AI Mentor and AI Workspace */}
+        <button className="text-left px-4 py-3 rounded-xl transition flex items-center gap-3 bg-indigo-600 text-white">
           <span>📊</span> Dashboard
-        </button>
-        <button onClick={() => setPage("chatbot")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "chatbot" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
-          AI Mentor
-        </button>
-        <button onClick={() => setPage("workspace")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "workspace" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
-          <span>📚</span> 📚 AI Workspace
         </button>
 
         <div className="mt-auto">
@@ -188,132 +185,106 @@ function LecturerDashboard({ user, onLogout }) {
       </div>
 
       <div className="flex-1 overflow-auto bg-gray-50">
-        {page === "chatbot" ? <Chatbot /> : page === "workspace" ? <Workspace /> : (
-          <div className="p-8">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-800">Welcome, {user.name}! 👋</h1>
-              <p className="text-gray-500 mt-1">Manage your courses and monitor student performance</p>
-            </div>
+        <div className="p-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-800">Welcome, {user.name}! 👋</h1>
+            <p className="text-gray-500 mt-1">Manage your courses and monitor student performance</p>
+          </div>
 
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">My Courses</h2>
-                <div className="flex gap-2 mb-4">
-                  <input
-                    type="text"
-                    value={newCourse}
-                    onChange={(e) => setNewCourse(e.target.value)}
-                    placeholder="Add a course e.g. Mathematics"
-                    className="flex-1 border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50 text-sm"
-                    onKeyDown={(e) => e.key === "Enter" && handleAddCourse()}
-                  />
-                  <button onClick={handleAddCourse} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium">
-                    Add
-                  </button>
-                </div>
-
-                <div className="space-y-2">
-                  {courses.length === 0 ? (
-                    <p className="text-gray-400 text-sm text-center py-4">No courses yet. Add one above!</p>
-                  ) : (
-                    courses.map((course) => (
-                      <div
-                        key={course.id}
-                        onClick={() => handleSelectCourse(course)}
-                        className={`p-3 rounded-xl border cursor-pointer transition ${activeCourse?.id === course.id ? "border-indigo-400 bg-indigo-50" : "border-gray-100 hover:bg-gray-50"}`}
-                      >
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium text-gray-800 text-sm">📖 {course.name}</span>
-                          <div className="flex items-center gap-2">
-                            {course.atRiskCount > 0 && (
-                              <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                ⚠️ {course.atRiskCount}
-                              </span>
-                            )}
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleDeleteCourse(course.id); }}
-                              className="text-red-400 hover:text-red-600 text-xs"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        </div>
-                        {course.code && (
-                          <div className="mt-1 flex items-center gap-2">
-                            <span className="text-xs text-gray-400">Course Code:</span>
-                            <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{course.code}</span>
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
+          <div className="grid grid-cols-2 gap-6 mb-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">My Courses</h2>
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  value={newCourse}
+                  onChange={(e) => setNewCourse(e.target.value)}
+                  placeholder="Add a course e.g. Mathematics"
+                  className="flex-1 border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50 text-sm"
+                  onKeyDown={(e) => e.key === "Enter" && handleAddCourse()}
+                />
+                <button onClick={handleAddCourse} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium">
+                  Add
+                </button>
               </div>
 
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                  {activeCourse ? `📊 ${activeCourse.name} — Student Distribution` : "📊 Student Distribution"}
-                </h2>
-                {!activeCourse ? (
-                  <div className="flex flex-col items-center justify-center h-40 text-center">
-                    <p className="text-4xl mb-2">👈</p>
-                    <p className="text-gray-400">Select a course to see distribution</p>
-                  </div>
-                ) : courseStudents.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-40 text-center">
-                    <p className="text-4xl mb-2">👥</p>
-                    <p className="text-gray-400">No students have checked their standing yet</p>
-                  </div>
+              <div className="space-y-2">
+                {courses.length === 0 ? (
+                  <p className="text-gray-400 text-sm text-center py-4">No courses yet. Add one above!</p>
                 ) : (
-                  <div>
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      {Object.entries(getDistribution()).map(([key, value]) => (
-                        <div key={key} className={`p-4 rounded-xl border-2 text-center ${getResultColor(key)}`}>
-                          <p className="text-2xl font-bold">{value}</p>
-                          <p className="text-sm font-medium">{getResultBadge(key)} {key}</p>
+                  courses.map((course) => (
+                    <div
+                      key={course.id}
+                      onClick={() => handleSelectCourse(course)}
+                      className={`p-3 rounded-xl border cursor-pointer transition ${activeCourse?.id === course.id ? "border-indigo-400 bg-indigo-50" : "border-gray-100 hover:bg-gray-50"}`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-gray-800 text-sm">📖 {course.name}</span>
+                        <div className="flex items-center gap-2">
+                          {course.atRiskCount > 0 && (
+                            <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                              ⚠️ {course.atRiskCount}
+                            </span>
+                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteCourse(course.id); }}
+                            className="text-red-400 hover:text-red-600 text-xs"
+                          >
+                            ✕
+                          </button>
                         </div>
-                      ))}
+                      </div>
+                      {course.code && (
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className="text-xs text-gray-400">Course Code:</span>
+                          <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{course.code}</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="bg-indigo-50 rounded-xl p-3 text-center">
-                      <p className="text-sm text-gray-500">Class Average CA Score</p>
-                      <p className="text-2xl font-bold text-indigo-600">
-                        {courseStudents.length > 0 ? (courseStudents.reduce((sum, s) => sum + s.ca, 0) / courseStudents.length).toFixed(1) : 0}/30
-                      </p>
-                    </div>
-                  </div>
+                  ))
                 )}
               </div>
             </div>
 
-            {activeCourse && atRiskStudents.length > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mb-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold text-red-700">⚠️ Students Needing Attention in {activeCourse.name}</h2>
-                  <button
-                    onClick={handleExport}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-xl transition"
-                  >
-                    📥 Export CSV
-                  </button>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                {activeCourse ? `📊 ${activeCourse.name} — Student Distribution` : "📊 Student Distribution"}
+              </h2>
+              {!activeCourse ? (
+                <div className="flex flex-col items-center justify-center h-40 text-center">
+                  <p className="text-4xl mb-2">👈</p>
+                  <p className="text-gray-400">Select a course to see distribution</p>
                 </div>
-                <div className="space-y-2">
-                  {atRiskStudents.map((s) => (
-                    <div key={s.id} className="bg-white rounded-xl p-3 flex justify-between items-center">
-                      <div>
-                        <p className="font-medium text-gray-800">{s.student_name}</p>
-                        <p className="text-xs text-gray-500">CA: {s.ca}/30 · Participation: {s.participation}/5 · Total: {s.total}/35</p>
+              ) : courseStudents.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-40 text-center">
+                  <p className="text-4xl mb-2">👥</p>
+                  <p className="text-gray-400">No students have checked their standing yet</p>
+                </div>
+              ) : (
+                <div>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    {Object.entries(getDistribution()).map(([key, value]) => (
+                      <div key={key} className={`p-4 rounded-xl border-2 text-center ${getResultColor(key)}`}>
+                        <p className="text-2xl font-bold">{value}</p>
+                        <p className="text-sm font-medium">{getResultBadge(key)} {key}</p>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getResultColor(s.prediction)}`}>
-                        {getResultBadge(s.prediction)} {s.prediction}
-                      </span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                  <div className="bg-indigo-50 rounded-xl p-3 text-center">
+                    <p className="text-sm text-gray-500">Class Average CA Score</p>
+                    <p className="text-2xl font-bold text-indigo-600">
+                      {courseStudents.length > 0 ? (courseStudents.reduce((sum, s) => sum + s.ca, 0) / courseStudents.length).toFixed(1) : 0}/30
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+          </div>
 
-            {activeCourse && courseStudents.length > 0 && atRiskStudents.length === 0 && (
-              <div className="flex justify-end mb-6">
+          {activeCourse && atRiskStudents.length > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-red-700">⚠️ Students Needing Attention in {activeCourse.name}</h2>
                 <button
                   onClick={handleExport}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-xl transition"
@@ -321,58 +292,82 @@ function LecturerDashboard({ user, onLogout }) {
                   📥 Export CSV
                 </button>
               </div>
-            )}
+              <div className="space-y-2">
+                {atRiskStudents.map((s) => (
+                  <div key={s.id} className="bg-white rounded-xl p-3 flex justify-between items-center">
+                    <div>
+                      <p className="font-medium text-gray-800">{s.student_name}</p>
+                      <p className="text-xs text-gray-500">CA: {s.ca}/30 · Participation: {s.participation}/5 · Total: {s.total}/35</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getResultColor(s.prediction)}`}>
+                      {getResultBadge(s.prediction)} {s.prediction}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                Manual Prediction {activeCourse ? `— ${activeCourse.name}` : ""}
-              </h2>
-              {!activeCourse && (
-                <p className="text-gray-400 text-sm mb-4">Select a course first to save the prediction to that course</p>
-              )}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Student Name</label>
-                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter student name" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
+          {activeCourse && courseStudents.length > 0 && atRiskStudents.length === 0 && (
+            <div className="flex justify-end mb-6">
+              <button
+                onClick={handleExport}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-xl transition"
+              >
+                📥 Export CSV
+              </button>
+            </div>
+          )}
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+              Manual Prediction {activeCourse ? `— ${activeCourse.name}` : ""}
+            </h2>
+            {!activeCourse && (
+              <p className="text-gray-400 text-sm mb-4">Select a course first to save the prediction to that course</p>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Student Name</label>
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter student name" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">CA Score <span className="text-gray-400">(out of 30)</span></label>
+                <input type="number" value={ca} onChange={(e) => setCa(e.target.value)} placeholder="0 - 30" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Participation <span className="text-gray-400">(out of 5)</span></label>
+                <input type="number" value={participation} onChange={(e) => setParticipation(e.target.value)} placeholder="0 - 5" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Exam Score <span className="text-gray-400">(out of 65)</span></label>
+                <input type="number" value={exam} onChange={(e) => setExam(e.target.value)} placeholder="0 - 65" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
+              </div>
+            </div>
+
+            <button onClick={handlePredict} disabled={loading} className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition duration-200">
+              {loading ? "Predicting..." : "Predict Performance"}
+            </button>
+
+            {prediction && (
+              <div className={`mt-4 p-4 rounded-xl border-2 ${getResultColor(prediction.prediction)}`}>
+                <div className="text-center text-xl font-bold mb-3">
+                  {getResultBadge(prediction.prediction)} {prediction.prediction} — Grade {prediction.grade}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">CA Score <span className="text-gray-400">(out of 30)</span></label>
-                  <input type="number" value={ca} onChange={(e) => setCa(e.target.value)} placeholder="0 - 30" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Participation <span className="text-gray-400">(out of 5)</span></label>
-                  <input type="number" value={participation} onChange={(e) => setParticipation(e.target.value)} placeholder="0 - 5" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Exam Score <span className="text-gray-400">(out of 65)</span></label>
-                  <input type="number" value={exam} onChange={(e) => setExam(e.target.value)} placeholder="0 - 65" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50" />
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="bg-white rounded-lg p-2 text-center">
+                    <p className="text-gray-500">Total Score</p>
+                    <p className="font-bold text-lg">{prediction.total}/100</p>
+                  </div>
+                  <div className="bg-white rounded-lg p-2 text-center">
+                    <p className="text-gray-500">To Next Grade</p>
+                    <p className="font-bold text-lg">{prediction.needed > 0 ? `+${prediction.needed}` : "Top Grade!"}</p>
+                  </div>
                 </div>
               </div>
-
-              <button onClick={handlePredict} disabled={loading} className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition duration-200">
-                {loading ? "Predicting..." : "Predict Performance"}
-              </button>
-
-              {prediction && (
-                <div className={`mt-4 p-4 rounded-xl border-2 ${getResultColor(prediction.prediction)}`}>
-                  <div className="text-center text-xl font-bold mb-3">
-                    {getResultBadge(prediction.prediction)} {prediction.prediction} — Grade {prediction.grade}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="bg-white rounded-lg p-2 text-center">
-                      <p className="text-gray-500">Total Score</p>
-                      <p className="font-bold text-lg">{prediction.total}/100</p>
-                    </div>
-                    <div className="bg-white rounded-lg p-2 text-center">
-                      <p className="text-gray-500">To Next Grade</p>
-                      <p className="font-bold text-lg">{prediction.needed > 0 ? `+${prediction.needed}` : "Top Grade!"}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

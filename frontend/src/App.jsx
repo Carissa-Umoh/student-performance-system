@@ -22,7 +22,7 @@ function App() {
   const [students, setStudents] = useState([]);
 
   const fetchStudents = async () => {
-    const res = await fetch("https://saps-backend-qcci.onrender.com/students");
+    const res = await fetch("http://127.0.0.1:5001/students");
     const data = await res.json();
     setStudents(data);
   };
@@ -32,7 +32,7 @@ function App() {
   }, []);
 
   const handleLogin = async () => {
-    const res = await fetch("https://saps-backend-qcci.onrender.com/login", {
+    const res = await fetch("http://127.0.0.1:5001/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -59,7 +59,7 @@ function App() {
 
     setLoading(true);
     try {
-      const res = await fetch("https://saps-ml.onrender.com/predict", {
+      const res = await fetch(" http://127.0.0.1:5001/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -71,7 +71,7 @@ function App() {
       const data = await res.json();
       setPrediction(data);
 
-      await fetch("https://saps-backend-qcci.onrender.com/students", {
+      await fetch("http://127.0.0.1:5001/students", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -92,7 +92,7 @@ function App() {
   };
 
   const handleDelete = async (id) => {
-    await fetch(`https://saps-backend-qcci.onrender.com/students/${id}`, { method: "DELETE" });
+    await fetch(`http://127.0.0.1:5001/students/${id}`, { method: "DELETE" });
     fetchStudents();
   };
 
@@ -191,9 +191,9 @@ function App() {
         <button onClick={() => setPage("chatbot")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "chatbot" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
           AI Mentor
         </button>
-        <button onClick={() => setPage("workspace")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "workspace" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
+        {/* <button onClick={() => setPage("workspace")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "workspace" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
           <span>📚</span> 📚 AI Workspace
-        </button>
+        </button> */}
 
         <div className="mt-auto">
           <button onClick={handleLogout} className="w-full text-left px-4 py-3 rounded-xl hover:bg-indigo-800 transition flex items-center gap-3 text-indigo-200 text-sm">

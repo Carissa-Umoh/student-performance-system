@@ -1,8 +1,10 @@
 import sapsLogo from "./assets/saps-logo.png";
 import { useState, useEffect } from "react";
 import Chatbot from "./Chatbot";
+import Workspace from "./Workspace";
 
 function StudentDashboard({ user, onLogout }) {
+  console.log("STUDENT DASHBOARD LOADED");
   const [courses, setCourses] = useState([]);
   const [scores, setScores] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -15,13 +17,13 @@ function StudentDashboard({ user, onLogout }) {
   const [page, setPage] = useState("dashboard");
 
   const fetchCourses = async () => {
-    const res = await fetch(`https://saps-backend-qcci.onrender.com/courses/${user.id}`);
+    const res = await fetch(`http://127.0.0.1:5001/courses/${user.id}`);
     const data = await res.json();
     setCourses(data);
   };
 
   const fetchScores = async () => {
-    const res = await fetch(`https://saps-backend-qcci.onrender.com/my-scores/${user.id}`);
+    const res = await fetch(`http://127.0.0.1:5001/my-scores/${user.id}`);
     const data = await res.json();
     setScores(data);
   };
@@ -29,14 +31,16 @@ function StudentDashboard({ user, onLogout }) {
   const handleSearch = async (query) => {
     setSearchQuery(query);
     if (query.trim().length < 2) { setSearchResults([]); return; }
-    const res = await fetch(`https://saps-backend-qcci.onrender.com/courses/search?q=${query}`);
+    const res = await fetch(`http://127.0.0.1:5001/courses/search?q=${query}`);
     const data = await res.json();
     const joinedCodes = courses.map(c => c.code);
+    console.log("My Courses:", courses);
+    console.log("Search Results:", data);
     setSearchResults(data.filter(c => !joinedCodes.includes(c.code)));
   };
 
   const handleJoinCourse = async (course) => {
-    const res = await fetch("https://saps-backend-qcci.onrender.com/courses/join", {
+    const res = await fetch("http://127.0.0.1:5001/courses/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code: course.code, user_id: user.id }),
@@ -85,7 +89,7 @@ function StudentDashboard({ user, onLogout }) {
   };
 
   const handleDeleteCourse = async (id) => {
-    await fetch(`https://saps-backend-qcci.onrender.com/courses/${id}`, { method: "DELETE" });
+    await fetch(`http://127.0.0.1:5001/courses/${id}`, { method: "DELETE" });
     fetchCourses();
     fetchScores();
     if (activeCourse?.id === id) {
@@ -119,18 +123,13 @@ function StudentDashboard({ user, onLogout }) {
       const partNum = Number(participation);
       const currentTotal = caNum + partNum;
 
-      const res = await fetch("https://saps-ml.onrender.com/predict", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-      ca: caNum,
-      participation: partNum,
-      exam: 0
-    }),
-  });
+      const res = await fetch("http://127.0.0.1:5001/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ca: caNum, participation: partNum, exam: 0 }),
+      });
 
-const data = await res.json();
-
+      const data = await res.json();
 
       const neededForE = Math.max(0, 40 - currentTotal);
       const neededForD = Math.max(0, 45 - currentTotal);
@@ -150,7 +149,7 @@ const data = await res.json();
 
       setPrediction(result);
 
-      await fetch("https://saps-backend-qcci.onrender.com/course-scores", {
+      await fetch("http://127.0.0.1:5001/course-scores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -189,14 +188,8 @@ const data = await res.json();
     return "";
   };
 
-  const getCourseScore = (courseId) => {
-    return scores.find(s => s.course_id === courseId);
-  };
-
-  const isLocked = (courseId) => {
-    const score = getCourseScore(courseId);
-    return score && score.update_count >= 1;
-  };
+  const getCourseScore = (courseId) => scores.find(s => s.course_id === courseId);
+  const isLocked = (courseId) => { const score = getCourseScore(courseId); return score && score.update_count >= 1; };
 
   return (
     <div className="flex min-h-screen">
@@ -219,7 +212,10 @@ const data = await res.json();
           📊 My Dashboard
         </button>
         <button onClick={() => setPage("chatbot")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "chatbot" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
-          AI Mentor
+          🤖 AI Mentor
+        </button>
+        <button onClick={() => setPage("workspace")} className={`text-left px-4 py-3 rounded-xl transition flex items-center gap-3 ${page === "workspace" ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-indigo-800"}`}>
+          📚 AI Workspace
         </button>
 
         <div className="mt-auto">
@@ -230,7 +226,7 @@ const data = await res.json();
       </div>
 
       <div className="flex-1 overflow-auto bg-gray-50">
-        {page === "chatbot" ? <Chatbot /> :
+        {page === "chatbot" ? <Chatbot /> : page === "workspace" ? <Workspace /> :
         <div className="p-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-800">Welcome, {user.name} 👋</h1>
@@ -266,11 +262,7 @@ const data = await res.json();
               {searchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl mt-1 shadow-lg z-10">
                   {searchResults.map((course) => (
-                    <div
-                      key={course.id}
-                      onClick={() => handleJoinCourse(course)}
-                      className="p-3 hover:bg-indigo-50 cursor-pointer border-b last:border-0 rounded-xl"
-                    >
+                    <div key={course.id} onClick={() => handleJoinCourse(course)} className="p-3 hover:bg-indigo-50 cursor-pointer border-b last:border-0 rounded-xl">
                       <p className="font-medium text-gray-800 text-sm">{course.name}</p>
                       <p className="text-xs text-gray-400">Code: {course.code}</p>
                     </div>
@@ -296,11 +288,7 @@ const data = await res.json();
                     const score = getCourseScore(course.id);
                     const locked = isLocked(course.id);
                     return (
-                      <div
-                        key={course.id}
-                        onClick={() => handleSelectCourse(course)}
-                        className={`p-3 rounded-xl border cursor-pointer transition ${activeCourse?.id === course.id ? "border-indigo-400 bg-indigo-50" : "border-gray-100 hover:bg-gray-50"}`}
-                      >
+                      <div key={course.id} onClick={() => handleSelectCourse(course)} className={`p-3 rounded-xl border cursor-pointer transition ${activeCourse?.id === course.id ? "border-indigo-400 bg-indigo-50" : "border-gray-100 hover:bg-gray-50"}`}>
                         <div className="flex justify-between items-center">
                           <span className="font-medium text-gray-800 text-sm">{course.name}</span>
                           <div className="flex items-center gap-2">
@@ -310,12 +298,7 @@ const data = await res.json();
                                 {score.prediction}
                               </span>
                             )}
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleDeleteCourse(course.id); }}
-                              className="text-red-400 hover:text-red-600 text-xs"
-                            >
-                              ✕
-                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDeleteCourse(course.id); }} className="text-red-400 hover:text-red-600 text-xs">✕</button>
                           </div>
                         </div>
                         {score && (
@@ -332,9 +315,7 @@ const data = await res.json();
               {activeCourse ? (
                 <>
                   <h2 className="text-lg font-semibold text-gray-800 mb-1">{activeCourse.name}</h2>
-                  <p className="text-gray-400 text-sm mb-4">
-                    {getCourseScore(activeCourse.id) ? "Your current prediction" : "Enter your scores to see your prediction"}
-                  </p>
+                  <p className="text-gray-400 text-sm mb-4">{getCourseScore(activeCourse.id) ? "Your current prediction" : "Enter your scores to see your prediction"}</p>
 
                   {isLocked(activeCourse.id) ? (
                     <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center mb-4">
