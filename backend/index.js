@@ -7,7 +7,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const isProduction = false;
+// Database configuration - automatically switches between SQLite (local) and PostgreSQL (production)
+const isProduction = process.env.DATABASE_URL !== undefined;
 
 let pool, db;
 
@@ -17,9 +18,15 @@ if (isProduction) {
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
+  console.log("Using PostgreSQL database");
 } else {
-  const Database = require("better-sqlite3");
-  db = new Database("students.db");
+  try {
+    const Database = require("better-sqlite3");
+    db = new Database("students.db");
+    console.log("Using SQLite database");
+  } catch (err) {
+    console.error("SQLite not available, using fallback");
+  }
 }
 
 // Helper functions to work with both databases
@@ -28,7 +35,6 @@ const query = async (sql, params = []) => {
     const result = await pool.query(sql, params);
     return result.rows;
   } else {
-    // Convert PostgreSQL $1, $2 syntax to SQLite ? syntax
     const sqliteSql = sql.replace(/\$\d+/g, "?");
     if (sql.trim().toUpperCase().startsWith("SELECT")) {
       return db.prepare(sqliteSql).all(...params);
@@ -243,10 +249,11 @@ const seedStudentScores = async () => {
     if (!existingScore) {
       const currentTotal = score.ca + score.participation;
       const getStanding = () => {
-        if (currentTotal < 10) return "Fail";
-        if (currentTotal < 15) return "At Risk";
-        if (currentTotal < 25) return "Pass Possible";
-        return "Distinction Possible";
+        const percentage = (currentTotal / 35) * 100;
+        if (percentage >= 70) return "Distinction";
+        if (percentage >= 60) return "Pass";
+        if (percentage >= 45) return "At Risk";
+        return "Fail";
       };
       const date = new Date().toLocaleDateString();
       await queryInsert(`INSERT INTO course_scores (course_id, user_id, ca, participation, exam, prediction, grade, total, needed, update_count, date) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
@@ -269,13 +276,8 @@ app.post("/login", async (req, res) => {
 // Search courses
 app.get("/courses/search", async (req, res) => {
   const { q } = req.query;
-  if (isProduction) {
-    const result = await pool.query("SELECT * FROM courses WHERE role = 'lecturer' AND (name ILIKE $1 OR code ILIKE $1)", [`%${q}%`]);
-    res.json(result.rows);
-  } else {
-    const result = db.prepare("SELECT * FROM courses WHERE role = 'lecturer' AND (name LIKE ? OR code LIKE ?)").all(`%${q}%`, `%${q}%`);
-    res.json(result);
-  }
+  const courses = await query("SELECT * FROM courses WHERE role = 'lecturer' AND (name LIKE $1 OR code LIKE $1)", [`%${q}%`]);
+  res.json(courses);
 });
 
 // Join course by code
@@ -340,25 +342,13 @@ app.get("/course-scores/:courseId", async (req, res) => {
   const course = await queryOne("SELECT * FROM courses WHERE id = $1", [req.params.courseId]);
   if (!course) return res.json([]);
 
-  let allCourseIds;
-  if (isProduction) {
-    const result = await pool.query("SELECT id FROM courses WHERE code = $1", [course.code]);
-    allCourseIds = result.rows.map(c => c.id);
-  } else {
-    allCourseIds = db.prepare("SELECT id FROM courses WHERE code = ?").all(course.code).map(c => c.id);
-  }
+  const allCourses = await query("SELECT id FROM courses WHERE code = $1", [course.code]);
+  const allCourseIds = allCourses.map(c => c.id);
 
   if (allCourseIds.length === 0) return res.json([]);
 
-  let scores;
-  if (isProduction) {
-    const placeholders = allCourseIds.map((_, i) => `$${i + 1}`).join(",");
-    const result = await pool.query(`SELECT cs.*, u.name as student_name FROM course_scores cs JOIN users u ON cs.user_id = u.id WHERE cs.course_id IN (${placeholders})`, allCourseIds);
-    scores = result.rows;
-  } else {
-    const placeholders = allCourseIds.map(() => "?").join(",");
-    scores = db.prepare(`SELECT cs.*, u.name as student_name FROM course_scores cs JOIN users u ON cs.user_id = u.id WHERE cs.course_id IN (${placeholders})`).all(...allCourseIds);
-  }
+  const placeholders = allCourseIds.map((_, i) => `$${i + 1}`).join(",");
+  const scores = await query(`SELECT cs.*, u.name as student_name FROM course_scores cs JOIN users u ON cs.user_id = u.id WHERE cs.course_id IN (${placeholders})`, allCourseIds);
   res.json(scores);
 });
 
@@ -433,7 +423,6 @@ app.get("/users", async (req, res) => {
   }
 });
 
-// ML Prediction endpoint
 // ML Prediction endpoint using actual trained model
 app.post("/predict", async (req, res) => {
   const { ca, participation, exam } = req.body;
@@ -445,7 +434,6 @@ app.post("/predict", async (req, res) => {
   };
   
   PythonShell.run('ml_predict.py', options).then(messages => {
-    // messages is an array of strings printed to stdout
     const result = JSON.parse(messages[0]);
     res.json(result);
   }).catch(err => {
@@ -466,10 +454,6 @@ app.post("/predict", async (req, res) => {
       prediction = "At Risk";
       grade = "C";
       needed = Math.ceil(60 - total);
-    } else if (total >= 40) {
-      prediction = "At Risk";
-      grade = "D";
-      needed = Math.ceil(45 - total);
     } else {
       prediction = "Fail";
       grade = "F";
@@ -480,9 +464,12 @@ app.post("/predict", async (req, res) => {
   });
 });
 
+// Start server
+const PORT = process.env.PORT || 5001;
+
 initDB().then(() => {
-  app.listen(5001, () => {
-    console.log("Backend running on http://127.0.0.1:5001");
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Backend running on port ${PORT}`);
   });
 }).catch(err => {
   console.error("Database connection failed:", err);
